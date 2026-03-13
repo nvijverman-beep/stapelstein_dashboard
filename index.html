@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stapelstein · Stock Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Instrument+Sans:wght@300;400;500;600&family=Instrument+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #16120e;
+  --ink2: #3d3830;
+  --ink3: #7a7168;
+  --ink4: #b8b0a5;
+  --paper: #f5f2ec;
+  --paper2: #edeae2;
+  --paper3: #e3dfd5;
+  --white: #fdfcf9;
+  --green: #2a6b42;
+  --green-bg: #e8f2ec;
+  --amber: #b86b0f;
+  --amber-bg: #fdf0e0;
+  --red: #b02b2b;
+  --red-bg: #faeaea;
+  --blue: #1e5a8a;
+  --blue-bg: #e3eef8;
+  --r: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* ── LOADING ── */
+#loader {
+  position: fixed; inset: 0;
+  background: var(--ink);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 20px; z-index: 999;
+  transition: opacity 0.5s;
+}
+#loader.done { opacity: 0; pointer-events: none; }
+.loader-brand {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px; font-weight: 800;
+  color: var(--paper);
+  letter-spacing: -0.5px;
+}
+.loader-dots { display: flex; gap: 8px; }
+.loader-dots span {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--paper3);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:.2;transform:scale(.8)} 50%{opacity:1;transform:scale(1)} }
+
+/* ── HEADER ── */
+header {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0 40px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  position: sticky; top: 0; z-index: 50;
+}
+.header-brand {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px; font-weight: 800;
+  letter-spacing: -0.3px;
+  display: flex; align-items: center; gap: 12px;
+}
+.header-brand::after {
+  content: 'STOCK';
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 2px;
+  background: rgba(255,255,255,0.12);
+  padding: 3px 8px; border-radius: 4px;
+  color: var(--paper3);
+}
+.header-meta {
+  display: flex; align-items: center; gap: 20px;
+  font-family: 'Instrument Mono', monospace;
+  font-size: 11px; color: var(--ink4);
+}
+.live-dot {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #6fcf97;
+}
+.live-dot::before {
+  content: '';
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #6fcf97;
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── CAMPAIGN BANNER ── */
+#campaignBanner {
+  background: var(--ink2);
+  color: var(--paper2);
+  padding: 10px 40px;
+  font-size: 12px;
+  display: flex; align-items: center; gap: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: none;
+}
+.campaign-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--ink4);
+}
+.campaign-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 4px;
+  font-weight: 500;
+}
+.campaign-both { background: rgba(255,200,100,0.15); color: #f5c842; }
+.campaign-d2c  { background: rgba(100,180,255,0.15); color: #7bc8f5; }
+.campaign-b2b  { background: rgba(180,255,150,0.12); color: #8fdb7a; }
+
+/* ── MAIN LAYOUT ── */
+main { max-width: 1400px; margin: 0 auto; padding: 32px 40px 80px; }
+
+/* ── SUMMARY CARDS ── */
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.s-card {
+  background: var(--white);
+  border: 1px solid var(--paper3);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  animation: fadeUp 0.4s ease both;
+}
+.s-card:nth-child(2){animation-delay:.05s}
+.s-card:nth-child(3){animation-delay:.1s}
+.s-card:nth-child(4){animation-delay:.15s}
+.s-card:nth-child(5){animation-delay:.2s}
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+.s-label {
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--ink3); margin-bottom: 8px;
+}
+.s-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px; font-weight: 700;
+  color: var(--ink); line-height: 1;
+}
+.s-sub { font-size: 11px; color: var(--ink3); margin-top: 5px; }
+.s-delta {
+  font-family: 'Instrument Mono', monospace;
+  font-size: 12px; margin-top: 4px;
+}
+.delta-up { color: var(--green); }
+.delta-down { color: var(--red); }
+.delta-flat { color: var(--ink4); }
+
+/* ── CONTROLS ── */
+.controls {
+  display: flex; align-items: center;
+  gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.controls-left { display: flex; align-items: center; gap: 10px; flex: 1; flex-wrap: wrap; }
+.controls-right { display: flex; align-items: center; gap: 10px; }
+
+.tab-group { display: flex; background: var(--paper2); border-radius: 8px; padding: 3px; gap: 2px; }
+.tab-btn {
+  padding: 7px 16px; border-radius: 6px; border: none;
+  background: none; font-family: 'Instrument Sans', sans-serif;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  color: var(--ink3); transition: all 0.15s;
+}
+.tab-btn.active { background: var(--white); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+.month-select {
+  padding: 7px 14px; border-radius: 8px;
+  border: 1px solid var(--paper3); background: var(--white);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 13px; color: var(--ink); cursor: pointer;
+  outline: none;
+}
+.month-select:focus { border-color: var(--ink3); }
+
+.search-box {
+  padding: 7px 14px 7px 34px;
+  border-radius: 8px; border: 1px solid var(--paper3);
+  background: var(--white); font-family: 'Instrument Sans', sans-serif;
+  font-size: 13px; color: var(--ink); outline: none; width: 200px;
+  transition: all 0.2s;
+}
+.search-box:focus { border-color: var(--ink3); width: 240px; }
+.search-wrap { position: relative; }
+.search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--ink4); pointer-events: none; }
+
+.filter-btn {
+  padding: 7px 14px; border-radius: 8px;
+  border: 1px solid var(--paper3); background: var(--white);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  color: var(--ink3); transition: all 0.15s;
+}
+.filter-btn:hover { border-color: var(--ink3); color: var(--ink); }
+.filter-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* ── TABLE ── */
+.table-shell {
+  background: var(--white);
+  border: 1px solid var(--paper3);
+  border-radius: var(--r);
+  overflow: hidden;
+  animation: fadeUp 0.5s ease 0.25s both;
+}
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: var(--paper2); border-bottom: 1px solid var(--paper3); }
+th {
+  padding: 11px 16px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--ink3); text-align: left;
+  white-space: nowrap; cursor: pointer; user-select: none;
+}
+th:hover { color: var(--ink); }
+th.num { text-align: right; }
+th .arr { opacity: 0.3; margin-left: 3px; font-size: 9px; }
+th.sorted .arr { opacity: 1; }
+
+td {
+  padding: 13px 16px;
+  border-bottom: 1px solid #f0ede6;
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tbody tr { transition: background 0.1s; cursor: pointer; }
+tbody tr:hover { background: #faf8f4; }
+tbody tr.row-crit { background: #fff9f9; }
+tbody tr.row-crit:hover { background: #fff3f3; }
+
+/* ── CELL TYPES ── */
+.color-cell { display: flex; align-items: center; gap: 10px; }
+.swatch {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.07);
+  flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+.cell-name { font-weight: 600; font-size: 13px; }
+.cell-sku { font-family: 'Instrument Mono', monospace; font-size: 10px; color: var(--ink4); margin-top: 1px; }
+
+.num-cell {
+  font-family: 'Instrument Mono', monospace;
+  font-size: 13px; text-align: right;
+}
+.num-cell.strong { font-size: 14px; font-weight: 600; }
+.num-cell.muted { color: var(--ink4); }
+.num-cell.neg { color: var(--red); }
+
+.delta-cell {
+  font-family: 'Instrument Mono', monospace;
+  font-size: 12px; text-align: right;
+  white-space: nowrap;
+}
+
+/* ── STATUS BADGE ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 20px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.badge-ok   { background: var(--green-bg); color: var(--green); }
+.badge-low  { background: var(--amber-bg); color: var(--amber); }
+.badge-crit { background: var(--red-bg);   color: var(--red); }
+.badge-na   { background: var(--paper2);   color: var(--ink4); }
+.badge-dot  { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+/* ── COVERAGE BARS ── */
+.cov-wrap { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+.cov-row  { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+.cov-lbl  { color: var(--ink4); width: 22px; font-size: 10px; }
+.cov-bar-bg { flex: 1; height: 4px; background: var(--paper3); border-radius: 2px; overflow: hidden; }
+.cov-bar-fill { height: 100%; border-radius: 2px; }
+.cov-num  { font-family: 'Instrument Mono', monospace; font-size: 10px; color: var(--ink3); width: 28px; text-align: right; }
+
+/* ── EXPAND ROW ── */
+.expand-td { padding: 0; border-bottom: 1px solid var(--paper3); }
+.expand-panel { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; background: #faf9f5; }
+.expand-panel.open { max-height: 300px; }
+.expand-inner {
+  padding: 20px 24px;
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  gap: 16px; border-top: 1px solid var(--paper3);
+}
+.ex-stat {}
+.ex-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--ink4); margin-bottom: 5px; }
+.ex-value { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: var(--ink); }
+.ex-sub { font-size: 11px; color: var(--ink3); margin-top: 3px; }
+
+/* ── FORECAST MONTHS SPARKLINE ── */
+.spark-wrap { padding: 16px 24px 20px; border-top: 1px solid var(--paper3); }
+.spark-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--ink4); margin-bottom: 12px; }
+.spark-months { display: flex; gap: 6px; align-items: flex-end; }
+.spark-month {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+}
+.spark-bar-wrap { width: 100%; display: flex; flex-direction: column; gap: 2px; align-items: center; }
+.spark-bar {
+  width: 100%; border-radius: 2px 2px 0 0;
+  min-height: 2px; transition: height 0.3s;
+}
+.spark-bar.d2c { background: var(--blue); opacity: 0.7; }
+.spark-bar.b2b { background: var(--green); opacity: 0.7; }
+.spark-mo { font-size: 9px; color: var(--ink4); font-family: 'Instrument Mono', monospace; }
+.spark-val { font-size: 9px; color: var(--ink3); font-family: 'Instrument Mono', monospace; }
+.spark-mo.active { color: var(--ink); font-weight: 700; }
+.spark-legend { display: flex; gap: 14px; margin-top: 10px; }
+.spark-legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--ink3); }
+.spark-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+/* ── TABLE FOOTER ── */
+.table-foot {
+  padding: 12px 16px;
+  border-top: 1px solid var(--paper3);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; color: var(--ink4);
+  background: var(--paper2);
+}
+
+/* ── ERROR STATE ── */
+.error-bar {
+  background: var(--amber-bg); border: 1px solid #f5c36a;
+  border-radius: var(--r); padding: 14px 20px;
+  margin-bottom: 20px; display: none;
+  font-size: 13px; color: var(--amber);
+}
+.error-bar strong { font-weight: 600; }
+
+/* ── SECTION HEADER ── */
+.section-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 28px 0 14px;
+}
+.section-head h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px; font-weight: 700; color: var(--ink);
+}
+.section-head-line { flex: 1; height: 1px; background: var(--paper3); }
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  main { padding: 20px 16px 60px; }
+  header { padding: 0 16px; }
+  .summary-row { grid-template-columns: 1fr 1fr; }
+  .hide-m { display: none; }
+  .expand-inner { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+
+
+<header>
+  <div class="header-brand">Stapelstein®</div>
+  <div class="header-meta">
+    <span class="live-dot" id="liveLabel">connecting…</span>
+    <span id="dataDate">—</span>
+  </div>
+</header>
+
+<div id="campaignBanner"></div>
+
+<main>
+  <div class="error-bar" id="errorBar">
+    <strong>Using demo data.</strong> Could not reach the live data source.
+    To connect live data, replace <code>APPS_SCRIPT_URL</code> in the config below.
+  </div>
+
+  <div class="summary-row" id="summaryRow"></div>
+
+  <!-- PRODUCTION SCHEDULE STRIP -->
+  <div id="prodStrip" style="margin-bottom:20px;display:none">
+    
+    </div>
+    <div id="prodStripContent" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+  </div>
+
+  <!-- CONTROLS (sticky) -->
+  <div style="position:sticky;top:60px;z-index:40;background:var(--paper);padding:12px 0 0;border-bottom:1px solid var(--paper3);margin-bottom:8px;">
+    <!-- Row 1: Category filter -->
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--ink4);white-space:nowrap">Category</span>
+      <div class="tab-group" id="catFilter">
+        <button class="tab-btn active" onclick="setCategory('all',this)">All</button>
+        <button class="tab-btn" onclick="setCategory('Original',this)">Original</button>
+        <button class="tab-btn" onclick="setCategory('Set',this)">Sets</button>
+        <button class="tab-btn" onclick="setCategory('Mini',this)">Mini</button>
+        <button class="tab-btn" onclick="setCategory('Grow',this)">Grow</button>
+        <button class="tab-btn" onclick="setCategory('Inside',this)">Inside</button>
+        <button class="tab-btn" onclick="setCategory('Board',this)">Board</button>
+        <button class="tab-btn" onclick="setCategory('Dynamic',this)">Dynamic</button>
+        <button class="tab-btn" onclick="setCategory('Mat',this)">Mat</button>
+      </div>
+    </div>
+    <!-- Row 2: Status filter + month + search -->
+    <div class="controls" style="padding:0;margin-bottom:10px;">
+      <div class="controls-left">
+        <div class="tab-group">
+          <button class="tab-btn active" onclick="setFilter('all',this)">All stock</button>
+          <button class="tab-btn" onclick="setFilter('crit',this)">Critical</button>
+          <button class="tab-btn" onclick="setFilter('low',this)">Low</button>
+          <button class="tab-btn" onclick="setFilter('ok',this)">Healthy</button>
+          <button class="tab-btn" onclick="setFilter('prod',this)">In production</button>
+        </div>
+        <select class="month-select" id="monthSel" onchange="render()">
+          <option value="0">January</option>
+          <option value="1">February</option>
+          <option value="2" selected>March</option>
+          <option value="3">April</option>
+          <option value="4">May</option>
+          <option value="5">June</option>
+          <option value="6">July</option>
+          <option value="7">August</option>
+          <option value="8">September</option>
+          <option value="9">October</option>
+          <option value="10">November</option>
+          <option value="11">December</option>
+        </select>
+      </div>
+      <div class="controls-right">
+        <div class="search-wrap">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-box" id="searchBox" placeholder="Search all SKUs…" oninput="render()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DYNAMIC SECTIONS -->
+  <div id="allSections"></div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG — replace with your deployed Apps Script URL
+// ═══════════════════════════════════════════
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyTLFvlPyZA8eDPfcTQJae8MdpzQZQ6qnI52PVlY15StKciPHl35R4n0pYO3gxOUKAvBA/exec';
+
+// ═══════════════════════════════════════════
+// STATIC DATA (hardcoded)
+// ═══════════════════════════════════════════
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const CAMPAIGNS = {
+  0: [{type:'d2c',label:'Mat Push'},{type:'b2b',label:'Nürnberg Fair'}],
+  1: [{type:'d2c',label:'Mat Push'},{type:'b2b',label:'Ambiente Fair'}],
+  2: [{type:'both',label:'Spring Promo'}],
+  3: [{type:'b2b',label:'Salone Fair'}],
+  5: [{type:'b2b',label:'Copenhagen Fair'}],
+  6: [{type:'both',label:'Back to School'}],
+  7: [{type:'d2c',label:'Black Roll Collab'}],
+  8: [{type:'b2b',label:'Paris Fair'}],
+  9: [{type:'both',label:'Winter Promo'}],
+  10:[{type:'d2c',label:'Black Friday Unique'},{type:'b2b',label:'Cut Off 11.12'}],
+  11:[{type:'d2c',label:'Cut Off 18.12'}],
+};
+
+const SWATCHES = {
+  // Original single colors
+  '100000':'#2a2a2a','100002':'#1e8b5a','100003':'#f59c1a','100004':'#a8294e',
+  '100005':'#2557a7','100006':'#9ca3af','100009':'#4a3f8c','100011':'#82c41a',
+  '100014':'#f06a20','100017':'#e83d70','100018':'#9b7ecb','100019':'#3dbf8c',
+  '100020':'#2e6b3e','100029':'#f5a8c5','100032':'#f5b88a','100033':'#d4b96a',
+  '100034':'#f7c6d8','100035':'#90c4e8','100036':'#c5b8e8',
+  // Board
+  '110900':'#2a2a2a','110901':'#9ca3af','110902':'#1a3a6b','110903':'#2557a7',
+  '110905':'#f5c842','110906':'#2e6b3e','110907':'#b02b2b','110908':'#f5a8c5',
+  '110909':'#7c3aed','110910':'#82c41a','110914':'#f06a20','110920':'#1e4d2b',
+  '110932':'#f5b88a','110936':'#c5b8e8','110976':'#e879a0',
+  // Grow
+  '151402':'#2e6b3e','151403':'#f5c842','151404':'#b02b2b','151405':'#2557a7',
+  '151414':'#f06a20','151418':'#9b7ecb','151419':'#82c41a','151420':'#1e4d2b',
+  '151421':'#1a3a6b','151432':'#f5b88a','151433':'#d4b96a','151434':'#f7c6d8',
+  '151435':'#90c4e8','151436':'#c5b8e8','151475':'#e879a0',
+  // Mat
+  '130137':'#90c4e8','130138':'#c5b8e8','130139':'#82c41a',
+  '271421':'#1a3a6b','271430':'#90c4e8',
+};
+
+// BOM: set SKU -> list of component SKUs
+const BOM = {
+  '100307': ['100002','100003','100004','100005','100014','100018'],
+  '100331': ['100036','100035','100019','100033','100032','100034'],
+  '201606': ['100002','100003','100017','100005','100014','100018'],
+  '201605': ['100036','100035','100019','100033','100032','100034'],
+  '160300': ['100002','100003','100004','100005','100014','100018'], // Mini uses Original components approx
+  '160330': ['100036','100035','100019','100033','100032','100034'],
+};
+
+const FORECAST = {
+  '100000':{name:'Stapelstein® Original Schwarz',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100002':{name:'Stapelstein® Original Emerald',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100003':{name:'Stapelstein® Original Mango',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100004':{name:'Stapelstein® Original Cranberry',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100005':{name:'Stapelstein® Original Sapphire',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100006':{name:'Stapelstein® Original Metallic-Grey',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100009':{name:'Stapelstein® Original Blueberry',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100011':{name:'Stapelstein® Original Lime',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100014':{name:'Stapelstein® Original Orange',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100017':{name:'Stapelstein® Original Dragonfruit',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100018':{name:'Stapelstein® Original Lavender',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100019':{name:'Stapelstein® Original Mintgrün',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100020':{name:'Stapelstein® Original Forest Green',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100029':{name:'Stapelstein® Original Pastel Pink',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100032':{name:'Stapelstein® Original Pale Orange',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100033':{name:'Stapelstein® Original Pale Mustard',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100034':{name:'Stapelstein® Original Light Pink',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100035':{name:'Stapelstein® Original Light Blue',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100036':{name:'Stapelstein® Original Pale Lavender',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '100209':{name:'Stapelstein® Original fresh',group:'Set',d2c:[29, 22, 79, 23, 6, 20, 13, 15, 12, 19, 41, 54],b2b:[64, 51, 35, 18, 10, 25, 41, 56, 30, 35, 38, 38]},
+  '100210':{name:'Stapelstein® Original warm classic',group:'Original',d2c:[17, 13, 47, 13, 6, 15, 11, 21, 14, 8, 30, 65],b2b:[56, 44, 31, 15, 9, 22, 35, 48, 26, 31, 33, 33]},
+  '100211':{name:'Stapelstein® Original cool classic',group:'Original',d2c:[9, 7, 25, 7, 3, 4, 9, 15, 10, 8, 28, 33],b2b:[54, 42, 29, 15, 8, 21, 34, 46, 25, 29, 32, 32]},
+  '100233':{name:'Stapelstein® Original warm pastel',group:'Original',d2c:[5, 4, 14, 4, 4, 2, 4, 4, 2, 5, 11, 7],b2b:[66, 52, 36, 18, 10, 26, 42, 57, 31, 36, 39, 39]},
+  '100235':{name:'Stapelstein® Original cool pastel',group:'Original',d2c:[7, 6, 20, 6, 0, 3, 7, 14, 4, 8, 19, 19],b2b:[95, 75, 52, 26, 15, 37, 60, 82, 45, 52, 56, 56]},
+  '100280':{name:'Stapelstein® Original baby walz',group:'Set',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[437, 344, 239, 120, 69, 170, 275, 377, 206, 239, 257, 257]},
+  '100307':{name:'Stapelstein® Original rainbow classic',group:'Set',d2c:[218, 165, 593, 166, 53, 53, 120, 144, 95, 104, 207, 648],b2b:[1289, 1016, 707, 353, 203, 503, 813, 1113, 609, 707, 760, 760]},
+  '100319':{name:'Stapelstein® Original ocean',group:'Original',d2c:[5, 4, 14, 4, 8, 3, 4, 0, 2, 2, 3, 5],b2b:[15, 12, 8, 4, 2, 6, 10, 13, 7, 8, 9, 9]},
+  '100331':{name:'Stapelstein® Original rainbow pastel',group:'Set',d2c:[173, 131, 471, 132, 36, 31, 80, 95, 65, 52, 126, 295],b2b:[1017, 801, 557, 279, 160, 397, 641, 878, 481, 557, 599, 599]},
+  '100900':{name:'Stapelstein® Original black',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[44, 35, 24, 12, 7, 17, 28, 38, 21, 24, 26, 26]},
+  '100902':{name:'Stapelstein® Original green',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[24, 19, 13, 7, 4, 9, 15, 21, 11, 13, 14, 14]},
+  '100903':{name:'Stapelstein® Original yellow',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[26, 21, 14, 7, 4, 10, 17, 23, 12, 14, 16, 16]},
+  '100904':{name:'Stapelstein® Original red',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[30, 24, 17, 8, 5, 12, 19, 26, 14, 17, 18, 18]},
+  '100905':{name:'Stapelstein® Original blue',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[25, 19, 14, 7, 4, 10, 16, 21, 12, 14, 15, 15]},
+  '100906':{name:'Stapelstein® Original grey',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[36, 29, 20, 10, 6, 14, 23, 31, 17, 20, 21, 21]},
+  '100909':{name:'Stapelstein® Original dark blue',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[122, 96, 67, 33, 19, 48, 77, 105, 58, 67, 72, 72]},
+  '100911':{name:'Stapelstein® Original lime',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[28, 22, 16, 8, 4, 11, 18, 24, 13, 16, 17, 17]},
+  '100914':{name:'Stapelstein® Original orange',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[28, 22, 16, 8, 4, 11, 18, 24, 13, 16, 17, 17]},
+  '100917':{name:'Stapelstein® Original pink',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[126, 99, 69, 34, 20, 49, 79, 109, 60, 69, 74, 74]},
+  '100918':{name:'Stapelstein® Original violet',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[53, 42, 29, 14, 8, 21, 33, 46, 25, 29, 31, 31]},
+  '100919':{name:'Stapelstein® Original light green',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[82, 65, 45, 22, 13, 32, 52, 71, 39, 45, 48, 48]},
+  '100920':{name:'Stapelstein® Original dark green',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[184, 145, 101, 51, 29, 72, 116, 159, 87, 101, 109, 109]},
+  '100932':{name:'Stapelstein® Original light orange',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[28, 22, 15, 8, 4, 11, 18, 24, 13, 15, 17, 17]},
+  '100933':{name:'Stapelstein® Original light yellow',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[28, 22, 15, 8, 4, 11, 17, 24, 13, 15, 16, 16]},
+  '100934':{name:'Stapelstein® Original light red',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[51, 40, 28, 14, 8, 20, 32, 44, 24, 28, 30, 30]},
+  '100935':{name:'Stapelstein® Original light blue',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[87, 68, 47, 24, 14, 34, 55, 75, 41, 47, 51, 51]},
+  '100936':{name:'Stapelstein® Original light violet',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[59, 47, 32, 16, 9, 23, 37, 51, 28, 32, 35, 35]},
+  '100976':{name:'Stapelstein® Original super confetti',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[367, 289, 201, 101, 58, 143, 231, 317, 173, 201, 216, 216]},
+  '100977':{name:'Stapelstein® Original super warm',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[149, 117, 82, 41, 23, 58, 94, 129, 70, 82, 88, 88]},
+  '100978':{name:'Stapelstein® Original super cool',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[147, 116, 80, 40, 23, 57, 92, 127, 69, 80, 86, 86]},
+  '110040':{name:'Stapelstein® Board babywalz',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[222, 175, 122, 61, 35, 87, 140, 191, 105, 122, 131, 131]},
+  '110900':{name:'Stapelstein® Board black',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[21, 16, 11, 6, 3, 8, 13, 18, 10, 11, 12, 12]},
+  '110901':{name:'Stapelstein® Board grey',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[37, 29, 20, 10, 6, 15, 23, 32, 18, 20, 22, 22]},
+  '110902':{name:'Stapelstein® Board dark blue',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[117, 92, 64, 32, 18, 46, 74, 101, 55, 64, 69, 69]},
+  '110903':{name:'Stapelstein® Board blue',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[37, 29, 20, 10, 6, 14, 23, 32, 17, 20, 22, 22]},
+  '110905':{name:'Stapelstein® Board yellow',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[25, 19, 13, 7, 4, 10, 15, 21, 12, 13, 14, 14]},
+  '110906':{name:'Stapelstein® Board green',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[34, 27, 18, 9, 5, 13, 21, 29, 16, 18, 20, 20]},
+  '110907':{name:'Stapelstein® Board red',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[30, 24, 17, 8, 5, 12, 19, 26, 14, 17, 18, 18]},
+  '110908':{name:'Stapelstein® Board pink',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[77, 60, 42, 21, 12, 30, 48, 66, 36, 42, 45, 45]},
+  '110909':{name:'Stapelstein® Board violet',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[47, 37, 26, 13, 7, 18, 30, 41, 22, 26, 28, 28]},
+  '110910':{name:'Stapelstein® Board light green',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[94, 74, 52, 26, 15, 37, 59, 81, 45, 52, 55, 55]},
+  '110914':{name:'Stapelstein® Board orange',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[17, 13, 9, 5, 3, 7, 11, 15, 8, 9, 10, 10]},
+  '110920':{name:'Stapelstein® Board dark green',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[128, 101, 70, 35, 20, 50, 81, 110, 60, 70, 75, 75]},
+  '110932':{name:'Stapelstein® Board light orange',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[19, 15, 10, 5, 3, 7, 12, 16, 9, 10, 11, 11]},
+  '110936':{name:'Stapelstein® Board light violet',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[160, 126, 88, 44, 25, 62, 101, 138, 76, 88, 94, 94]},
+  '110976':{name:'Stapelstein® Board super confetti',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[1168, 920, 640, 320, 184, 456, 736, 1008, 552, 640, 688, 688]},
+  '111600':{name:'Stapelstein® Board rainbow classic',group:'Board',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0],b2b:[46, 36, 25, 13, 7, 18, 29, 39, 22, 25, 27, 27]},
+  '120115':{name:'Stapelstein® Play Inside (deutsch)',group:'Inside',d2c:[9, 7, 25, 7, 0, 2, 0, 4, 1, 0, 2, 0],b2b:[12, 10, 7, 3, 2, 5, 8, 11, 6, 7, 7, 7]},
+  '120119':{name:'Stapelstein® Play Inside (english)',group:'Inside',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[2, 2, 1, 1, 0, 1, 1, 2, 1, 1, 1, 1]},
+  '130137':{name:'Stapelstein® Mat light blue',group:'Mat',d2c:[5, 4, 14, 4, 3, 3, 7, 4, 3, 7, 0, 5],b2b:[26, 21, 14, 7, 4, 10, 17, 23, 12, 14, 16, 16]},
+  '130138':{name:'Stapelstein® Mat light violet',group:'Mat',d2c:[15, 12, 41, 12, 2, 3, 4, 8, 2, 7, 2, 10],b2b:[24, 19, 13, 7, 4, 10, 15, 21, 12, 13, 14, 14]},
+  '130139':{name:'Stapelstein® Mat light green',group:'Mat',d2c:[7, 6, 20, 6, 3, 6, 2, 8, 4, 7, 5, 5],b2b:[27, 21, 15, 7, 4, 10, 17, 23, 13, 15, 16, 16]},
+  '140200':{name:'Stapelstein® Inside warm classic',group:'Inside',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]},
+  '140201':{name:'Stapelstein® Inside cool classic',group:'Inside',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]},
+  '140302':{name:'Stapelstein® Inside rainbow classic',group:'Inside',d2c:[21, 16, 58, 16, 9, 32, 53, 34, 15, 15, 44, 72],b2b:[4, 3, 2, 1, 1, 2, 3, 4, 2, 2, 3, 3]},
+  '140306':{name:'Stapelstein® Inside rainbow pastel',group:'Inside',d2c:[17, 13, 47, 13, 2, 19, 35, 17, 4, 7, 18, 38],b2b:[5, 4, 3, 1, 1, 2, 3, 4, 2, 3, 3, 3]},
+  '150200':{name:'Stapelstein® Connox Original Grow',group:'Grow',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1]},
+  '150300':{name:'Stapelstein® Original Grow Rainbow classic',group:'Grow',d2c:[3, 3, 9, 3, 0, 0, 6, 0, 0, 2, 0, 3],b2b:[17, 13, 9, 5, 3, 7, 11, 14, 8, 9, 10, 10]},
+  '150301':{name:'Stapelstein® Original Grow Rainbow pastel',group:'Grow',d2c:[5, 4, 14, 4, 0, 0, 2, 0, 2, 0, 2, 5],b2b:[12, 9, 6, 3, 2, 5, 7, 10, 6, 6, 7, 7]},
+  '150640':{name:'Stapelstein® Original Grow waters',group:'Grow',d2c:[0, 0, 0, 0, 7, 7, 6, 12, 4, 8, 17, 24],b2b:[8, 6, 4, 2, 1, 3, 5, 7, 4, 4, 5, 5]},
+  '150641':{name:'Stapelstein® Original Grow greens',group:'Grow',d2c:[17, 13, 47, 13, 7, 11, 11, 17, 6, 10, 11, 12],b2b:[8, 6, 5, 2, 1, 3, 5, 7, 4, 5, 5, 5]},
+  '151402':{name:'Stapelstein® Original Grow green',group:'Grow',d2c:[13, 10, 36, 10, 2, 3, 4, 4, 1, 5, 5, 7],b2b:[16, 13, 9, 4, 3, 6, 10, 14, 8, 9, 10, 10]},
+  '151403':{name:'Stapelstein® Original Grow yellow',group:'Grow',d2c:[5, 4, 14, 4, 2, 2, 4, 0, 2, 4, 5, 7],b2b:[15, 12, 8, 4, 2, 6, 9, 13, 7, 8, 9, 9]},
+  '151404':{name:'Stapelstein® Original Grow red',group:'Grow',d2c:[7, 6, 20, 6, 4, 2, 0, 2, 5, 4, 6, 5],b2b:[20, 15, 11, 5, 3, 8, 12, 17, 9, 11, 12, 12]},
+  '151405':{name:'Stapelstein® Original Grow blue',group:'Grow',d2c:[3, 3, 9, 3, 0, 6, 2, 4, 4, 0, 6, 3],b2b:[23, 18, 13, 6, 4, 9, 15, 20, 11, 13, 14, 14]},
+  '151414':{name:'Stapelstein® Original Grow orange',group:'Grow',d2c:[3, 3, 9, 3, 2, 0, 0, 0, 2, 5, 11, 5],b2b:[13, 11, 7, 4, 2, 5, 8, 12, 6, 7, 8, 8]},
+  '151418':{name:'Stapelstein® Original Grow violet',group:'Grow',d2c:[7, 6, 20, 6, 8, 3, 6, 6, 6, 4, 10, 19],b2b:[21, 16, 11, 6, 3, 8, 13, 18, 10, 11, 12, 12]},
+  '151419':{name:'Stapelstein® Original Grow light green',group:'Grow',d2c:[17, 13, 47, 13, 3, 10, 6, 14, 7, 4, 6, 7],b2b:[30, 24, 16, 8, 5, 12, 19, 26, 14, 16, 18, 18]},
+  '151420':{name:'Stapelstein® Original Grow dark green',group:'Grow',d2c:[0, 0, 0, 0, 17, 14, 18, 25, 9, 13, 26, 45],b2b:[66, 52, 36, 18, 10, 26, 42, 57, 31, 36, 39, 39]},
+  '151421':{name:'Stapelstein® Original Grow dark blue',group:'Grow',d2c:[0, 7, 13, 8, 8, 2, 18, 15, 14, 4, 15, 21],b2b:[35, 27, 19, 9, 5, 14, 22, 30, 16, 19, 20, 20]},
+  '151432':{name:'Stapelstein® Original Grow light orange',group:'Grow',d2c:[5, 4, 14, 4, 3, 2, 6, 4, 2, 4, 5, 5],b2b:[10, 8, 5, 3, 2, 4, 6, 8, 5, 5, 6, 6]},
+  '151433':{name:'Stapelstein® Original Grow light yellow',group:'Grow',d2c:[5, 4, 14, 4, 0, 3, 7, 4, 2, 7, 6, 5],b2b:[9, 7, 5, 3, 1, 4, 6, 8, 4, 5, 6, 6]},
+  '151434':{name:'Stapelstein® Original Grow light red',group:'Grow',d2c:[9, 7, 25, 7, 6, 8, 9, 10, 7, 8, 10, 35],b2b:[25, 19, 14, 7, 4, 10, 16, 21, 12, 14, 15, 15]},
+  '151435':{name:'Stapelstein® Original Grow light blue',group:'Grow',d2c:[13, 10, 36, 10, 7, 7, 9, 15, 3, 15, 14, 12],b2b:[47, 37, 26, 13, 7, 18, 29, 40, 22, 26, 27, 27]},
+  '151436':{name:'Stapelstein® Original Grow light violet',group:'Grow',d2c:[19, 15, 52, 15, 2, 4, 7, 12, 4, 16, 17, 21],b2b:[32, 25, 18, 9, 5, 13, 20, 28, 15, 18, 19, 19]},
+  '151475':{name:'Stapelstein® Original Grow super confetti',group:'Grow',d2c:[62, 47, 169, 48, 25, 24, 46, 40, 29, 38, 60, 86],b2b:[183, 144, 100, 50, 29, 72, 116, 158, 87, 100, 108, 108]},
+  '160300':{name:'Stapelstein® Original Mini rainbow classic',group:'Mini',d2c:[97, 74, 264, 74, 34, 44, 67, 97, 60, 83, 187, 198],b2b:[263, 208, 144, 72, 42, 103, 166, 227, 125, 144, 155, 155]},
+  '160330':{name:'Stapelstein® Original Mini rainbow pastel',group:'Mini',d2c:[118, 89, 321, 90, 30, 43, 63, 105, 45, 74, 129, 168],b2b:[219, 173, 120, 60, 35, 86, 138, 189, 104, 120, 129, 129]},
+  '161475':{name:'Stapelstein® Original Mini super confetti',group:'Mini',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[29, 23, 16, 8, 5, 11, 18, 25, 14, 16, 17, 17]},
+  '161620':{name:'Special Mini rainbow classic',group:'Mini',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[394, 310, 216, 108, 62, 154, 248, 340, 186, 216, 232, 232]},
+  '161630':{name:'Stapelstein® Original Mini rainbow pastel',group:'Mini',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[5, 4, 3, 1, 1, 2, 3, 4, 2, 3, 3, 3]},
+  '180280':{name:'Stapelstein® Tildi Unique 3er Set',group:'Set',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[9, 7, 5, 2, 1, 3, 6, 8, 4, 5, 5, 5]},
+  '180380':{name:'Stapelstein® Tildi Unique 6er Set',group:'Set',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[5, 4, 3, 1, 1, 2, 3, 4, 2, 3, 3, 3]},
+  '181600':{name:'Stapelstein® Unique Set',group:'Set',d2c:[77, 58, 210, 59, 76, 65, 126, 226, 83, 125, 1, 26],b2b:[3, 3, 2, 1, 1, 1, 2, 3, 2, 2, 2, 2]},
+  '200103':{name:'Stapelstein® Inside Set cool classic',group:'Inside',d2c:[21, 16, 58, 16, 13, 16, 27, 28, 18, 33, 45, 72],b2b:[17, 14, 10, 5, 3, 7, 11, 15, 8, 10, 10, 10]},
+  '200104':{name:'Stapelstein® Inside Set warm classic',group:'Inside',d2c:[11, 9, 30, 9, 11, 10, 23, 51, 17, 29, 34, 75],b2b:[11, 8, 6, 3, 2, 4, 7, 9, 5, 6, 6, 6]},
+  '200105':{name:'Stapelstein® Inside Set cool pastel',group:'Inside',d2c:[9, 7, 25, 7, 9, 4, 13, 23, 14, 15, 29, 42],b2b:[16, 13, 9, 4, 3, 6, 10, 14, 8, 9, 9, 9]},
+  '200106':{name:'Stapelstein® Inside Set warm pastel',group:'Inside',d2c:[5, 4, 14, 4, 2, 8, 13, 2, 7, 10, 14, 19],b2b:[10, 8, 6, 3, 2, 4, 7, 9, 5, 6, 6, 6]},
+  '200110':{name:'Stapelstein® Dynamic all waters & greens',group:'Dynamic',d2c:[21, 16, 58, 16, 12, 12, 32, 53, 32, 150, 100, 158],b2b:[92, 73, 51, 25, 15, 36, 58, 80, 44, 51, 54, 54]},
+  '200111':{name:'Stapelstein® Dynamic all flowers',group:'Dynamic',d2c:[17, 13, 47, 13, 9, 10, 25, 40, 14, 50, 78, 98],b2b:[83, 65, 46, 23, 13, 32, 52, 72, 39, 46, 49, 49]},
+  '200170':{name:'Stapelstein® Dynamic all super confetti',group:'Dynamic',d2c:[27, 21, 74, 21, 16, 18, 44, 71, 44, 116, 138, 158],b2b:[86, 67, 47, 23, 13, 33, 54, 74, 40, 47, 50, 50]},
+  '200181':{name:'Stapelstein® Dynamic all Connox Ocean',group:'Dynamic',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[5, 4, 3, 1, 1, 2, 3, 4, 2, 3, 3, 3]},
+  '200182':{name:'Stapelstein® Dynamic all Connox Blossom',group:'Dynamic',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[5, 4, 3, 1, 1, 2, 3, 4, 2, 3, 3, 3]},
+  '200210':{name:'Stapelstein® Dynamic small waters & greens',group:'Dynamic',d2c:[23, 18, 63, 18, 13, 15, 37, 60, 47, 116, 118, 147],b2b:[96, 76, 53, 26, 15, 38, 61, 83, 45, 53, 57, 57]},
+  '200211':{name:'Stapelstein® Dynamic small flowers',group:'Dynamic',d2c:[17, 13, 47, 13, 9, 11, 27, 43, 15, 54, 83, 100],b2b:[101, 79, 55, 28, 16, 39, 63, 87, 48, 55, 59, 59]},
+  '200270':{name:'Stapelstein® Dynamic small super confetti',group:'Dynamic',d2c:[31, 24, 85, 24, 17, 20, 49, 81, 55, 127, 159, 165],b2b:[139, 110, 76, 38, 22, 54, 88, 120, 66, 76, 82, 82]},
+  '200281':{name:'Stapelstein® Dynamic Baby Kochs',group:'Dynamic',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[9, 7, 5, 2, 1, 3, 6, 8, 4, 5, 5, 5]},
+  '200282':{name:'Stapelstein® Dynamic Jutter & Co',group:'Dynamic',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[8, 7, 5, 2, 1, 3, 5, 7, 4, 5, 5, 5]},
+  '200283':{name:'Stapelstein® Dynamic Blabloom',group:'Dynamic',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[8, 7, 5, 2, 1, 3, 5, 7, 4, 5, 5, 5]},
+  '200284':{name:'Stapelstein® Dynamic Reiger an de Raaf',group:'Dynamic',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[8, 7, 5, 2, 1, 3, 5, 7, 4, 5, 5, 5]},
+  '200285':{name:'Stapelstein® Dynamic ILoveSpeelgoed',group:'Dynamic',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[27, 21, 15, 7, 4, 11, 17, 23, 13, 15, 16, 16]},
+  '200290':{name:'Stapelstein® Greens Set',group:'Set',d2c:[25, 19, 69, 20, 11, 12, 7, 25, 7, 16, 22, 54],b2b:[39, 31, 21, 11, 6, 15, 25, 34, 18, 21, 23, 23]},
+  '200291':{name:'Stapelstein® Waters Set',group:'Set',d2c:[28, 22, 77, 22, 12, 18, 14, 21, 13, 24, 42, 54],b2b:[31, 24, 17, 8, 5, 12, 19, 26, 14, 17, 18, 18]},
+  '200401':{name:'Stapelstein® Inside Set classic',group:'Inside',d2c:[27, 21, 74, 21, 18, 52, 51, 36, 15, 29, 41, 35],b2b:[66, 52, 36, 18, 10, 26, 42, 57, 31, 36, 39, 39]},
+  '200402':{name:'Stapelstein® Inside Set pastel',group:'Inside',d2c:[21, 16, 58, 16, 13, 7, 30, 21, 5, 8, 36, 33],b2b:[80, 63, 44, 22, 13, 31, 50, 69, 38, 44, 47, 47]},
+  '200444':{name:'Rainbow Set complete pastel',group:'Set',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[140, 111, 77, 38, 22, 55, 88, 121, 66, 77, 83, 83]},
+  '200445':{name:'Rainbow Set complete classic',group:'Set',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[150, 118, 82, 41, 24, 59, 95, 130, 71, 82, 89, 89]},
+  '200490':{name:'Stapelstein® Waters and Greens Set complete',group:'Set',d2c:[95, 72, 259, 73, 32, 40, 56, 38, 23, 33, 36, 77],b2b:[43, 34, 24, 12, 7, 17, 27, 37, 20, 24, 26, 26]},
+  '201605':{name:'Stapelstein® Rainbow Set pastel',group:'Set',d2c:[200, 151, 545, 153, 72, 62, 141, 159, 100, 136, 306, 611],b2b:[1138, 897, 624, 312, 179, 444, 717, 982, 538, 624, 671, 671]},
+  '201606':{name:'Stapelstein® Rainbow Set classic',group:'Set',d2c:[290, 219, 789, 221, 132, 190, 307, 315, 186, 211, 557, 1],b2b:[1306, 1029, 715, 358, 206, 510, 823, 1127, 617, 715, 769, 769]},
+  '201690':{name:'Stapelstein® Waters and Greens Set',group:'Set',d2c:[72, 55, 196, 55, 30, 23, 46, 58, 20, 30, 41, 130],b2b:[30, 24, 16, 8, 5, 12, 19, 26, 14, 16, 18, 18]},
+  '201802':{name:'Stapelstein® Original education',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[48, 38, 26, 13, 8, 19, 30, 42, 23, 26, 28, 28]},
+  '201830':{name:'Stapelstein® Original education pastel',group:'Original',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[16, 13, 9, 4, 3, 6, 10, 14, 8, 9, 9, 9]},
+  '203020':{name:'All in Set classic',group:'Set',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[45, 35, 25, 12, 7, 18, 28, 39, 21, 25, 26, 26]},
+  '203030':{name:'All in Set pastel',group:'Set',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[42, 33, 23, 12, 7, 16, 26, 36, 20, 23, 25, 25]},
+  '203110':{name:'Stapelstein® Dynamic complete super confetti',group:'Dynamic',d2c:[7, 6, 20, 6, 4, 4, 7, 10, 5, 16, 10, 17],b2b:[10, 8, 5, 3, 2, 4, 6, 9, 5, 5, 6, 6]},
+  '203220':{name:'Stapelstein® POS All in Set classic',group:'Set',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[4, 3, 2, 1, 1, 2, 2, 3, 2, 2, 2, 2]},
+  '203230':{name:'Stapelstein® POS All in Set pastel',group:'Set',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[3, 2, 1, 1, 0, 1, 2, 2, 1, 1, 1, 1]},
+  '261420':{name:'Stapelstein® Base dark blue',group:'Dynamic',d2c:[27, 21, 74, 21, 15, 16, 42, 68, 66, 189, 133, 179],b2b:[240, 189, 132, 66, 38, 94, 151, 207, 113, 132, 141, 141]},
+  '261422':{name:'Stapelstein® Base pink',group:'Dynamic',d2c:[15, 12, 41, 12, 9, 10, 25, 40, 14, 49, 76, 96],b2b:[207, 163, 114, 57, 33, 81, 131, 179, 98, 114, 122, 122]},
+  '261423':{name:'Stapelstein® Base dark green',group:'Dynamic',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[12, 9, 6, 3, 2, 5, 7, 10, 5, 6, 7, 7]},
+  '261470':{name:'Stapelstein® Base super confetti',group:'Dynamic',d2c:[44, 34, 120, 34, 23, 27, 68, 110, 37, 138, 218, 358],b2b:[366, 289, 201, 100, 58, 143, 231, 316, 173, 201, 216, 216]},
+  '271421':{name:'Stapelstein® Pad dark blue',group:'Mat',d2c:[27, 21, 74, 21, 16, 18, 30, 71, 24, 88, 13, 86],b2b:[20, 15, 11, 5, 3, 8, 12, 17, 9, 11, 12, 12]},
+  '271430':{name:'Stapelstein® Pad light blue',group:'Mat',d2c:[54, 41, 147, 42, 30, 33, 87, 142, 48, 177, 280, 117],b2b:[50, 39, 27, 14, 8, 19, 31, 43, 23, 27, 29, 29]},
+  '501542':{name:'Stapelstein® Special rainbow classic fusion',group:'Set',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[235, 185, 129, 64, 37, 92, 148, 203, 111, 129, 138, 138]},
+  '501543':{name:'Stapelstein® Special rainbow pastel fusion',group:'Set',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[235, 185, 129, 64, 37, 92, 148, 203, 111, 129, 138, 138]},
+  '501620':{name:'Grimms x Stapelstein® Set classic',group:'Set',d2c:[31, 24, 85, 24, 16, 20, 28, 38, 32, 35, 68, 128],b2b:[78, 61, 43, 21, 12, 30, 49, 67, 37, 43, 46, 46]},
+  '501630':{name:'Grimms x Stapelstein® Set pastel',group:'Set',d2c:[50, 38, 137, 39, 15, 15, 20, 32, 29, 43, 59, 93],b2b:[84, 66, 46, 23, 13, 33, 53, 72, 40, 46, 49, 49]},
+  '808022':{name:'Inlay Stapelstein® 6+1 Set',group:'Set',d2c:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],b2b:[94, 74, 52, 26, 15, 37, 59, 81, 45, 52, 55, 55]},
+  '142003':{name:'Inside S gelb',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '142007':{name:'Inside S rot',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '142009':{name:'Inside S violett',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '142033':{name:'Inside S senfgelb',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '142036':{name:'Inside S light violett',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '142105':{name:'Inside M azur-blau',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '142114':{name:'Inside M orange',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '142132':{name:'Inside M pale orange',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '142135':{name:'Inside M light blue',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '142203':{name:'Inside L gelb',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '142206':{name:'Inside L dunkelgrün',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '142207':{name:'Inside L rot',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '142219':{name:'Inside L mintgrün',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '142234':{name:'Inside L light pink',group:'Inside',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180000':{name:'Original Unique schwarz',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180002':{name:'Original Unique Emerald',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180003':{name:'Original Unique Mango',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180004':{name:'Original Unique Cranberry',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180005':{name:'Original Unique Azure-Blue',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180006':{name:'Original Unique Metallic-Grey',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180009':{name:'Original Unique Blueberry',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180011':{name:'Original Unique grün',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180014':{name:'Original Unique orange',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180017':{name:'Original Unique Dragonfruit',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180018':{name:'Original Unique violett',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180019':{name:'Original Unique mintgrün',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180020':{name:'Original Unique Forest Green',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180029':{name:'Original Unique Pastel Pink',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180032':{name:'Original Unique Pale Mustard',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180033':{name:'Original Unique light pink',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180034':{name:'Original Unique light blue',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180035':{name:'Original Unique pale orange',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180036':{name:'Original Unique light violett',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+  '180041':{name:'Original Unique violett+light violett',group:'Original',d2c:[0,0,0,0,0,0,0,0,0,0,0,0],b2b:[0,0,0,0,0,0,0,0,0,0,0,0]},
+};
+
+
+
+// Demo inventory (used when Apps Script not connected)
+const DEMO_CURRENT = {
+  '100000':{total:417,phys:385,reserved:32,production:0,avail:385,reorder:450},
+  '100002':{total:6497,phys:3299,reserved:3198,production:7500,avail:10799,reorder:450},
+  '100003':{total:10336,phys:7149,reserved:3187,production:0,avail:7149,reorder:450},
+  '100004':{total:3585,phys:863,reserved:2722,production:6000,avail:6863,reorder:450},
+  '100005':{total:8901,phys:5713,reserved:3188,production:1483,avail:7196,reorder:450},
+  '100006':{total:49,phys:0,reserved:57,production:0,avail:-8,reorder:100},
+  '100009':{total:670,phys:500,reserved:170,production:0,avail:500,reorder:100},
+  '100011':{total:231,phys:140,reserved:91,production:0,avail:140,reorder:100},
+  '100014':{total:2712,phys:0,reserved:3199,production:6000,avail:5513,reorder:450},
+  '100017':{total:194,phys:47,reserved:147,production:0,avail:47,reorder:450},
+  '100018':{total:6833,phys:3613,reserved:3220,production:0,avail:3613,reorder:450},
+  '100019':{total:6394,phys:3152,reserved:3242,production:83,avail:3235,reorder:450},
+  '100020':{total:632,phys:272,reserved:360,production:72,avail:344,reorder:450},
+  '100029':{total:610,phys:224,reserved:386,production:87,avail:311,reorder:450},
+  '100032':{total:9510,phys:6346,reserved:3164,production:0,avail:6346,reorder:450},
+  '100033':{total:8096,phys:5034,reserved:3062,production:292,avail:5326,reorder:450},
+  '100034':{total:5550,phys:2384,reserved:3166,production:6020,avail:8404,reorder:450},
+  '100035':{total:6316,phys:3091,reserved:3225,production:1512,avail:4603,reorder:450},
+  '100036':{total:6895,phys:3674,reserved:3221,production:0,avail:3674,reorder:450},
+  '100076':{total:1382,phys:997,reserved:385,production:0,avail:997,reorder:450},
+  '100077':{total:418,phys:183,reserved:235,production:0,avail:183,reorder:450},
+  '100078':{total:445,phys:208,reserved:237,production:0,avail:208,reorder:450},
+  '100084':{total:281,phys:281,reserved:0,production:0,avail:281,reorder:100},
+  '100209':{total:132,phys:104,reserved:28,production:0,avail:104,reorder:0},
+  '100210':{total:120,phys:100,reserved:20,production:0,avail:100,reorder:0},
+  '100211':{total:50,phys:33,reserved:17,production:0,avail:33,reorder:0},
+  '100233':{total:39,phys:24,reserved:15,production:80,avail:104,reorder:0},
+  '100235':{total:118,phys:65,reserved:53,production:40,avail:105,reorder:0},
+  '100307':{total:239,phys:0,reserved:296,production:443,avail:386,reorder:0},
+  '100319':{total:19,phys:19,reserved:0,production:0,avail:19,reorder:0},
+  '100331':{total:111,phys:0,reserved:272,production:698,avail:537,reorder:0},
+  '100420':{total:425,phys:0,reserved:456,production:685,avail:654,reorder:0},
+  '100430':{total:892,phys:105,reserved:787,production:821,avail:926,reorder:0},
+  '100512':{total:47,phys:0,reserved:60,production:48,avail:35,reorder:0},
+  '100900':{total:2,phys:2,reserved:0,production:32,avail:34,reorder:0},
+  '100902':{total:-1,phys:0,reserved:0,production:27,avail:26,reorder:0},
+  '100903':{total:0,phys:0,reserved:0,production:14,avail:14,reorder:0},
+  '100904':{total:0,phys:0,reserved:0,production:30,avail:30,reorder:0},
+  '100905':{total:-1,phys:0,reserved:0,production:23,avail:22,reorder:0},
+  '100906':{total:0,phys:0,reserved:0,production:25,avail:25,reorder:0},
+  '100909':{total:-7,phys:0,reserved:0,production:49,avail:42,reorder:0},
+  '100911':{total:0,phys:0,reserved:0,production:25,avail:25,reorder:0},
+  '100914':{total:0,phys:0,reserved:0,production:20,avail:20,reorder:0},
+  '100917':{total:-2,phys:0,reserved:0,production:40,avail:38,reorder:0},
+  '100918':{total:-1,phys:0,reserved:0,production:52,avail:51,reorder:0},
+  '100919':{total:-2,phys:0,reserved:0,production:34,avail:32,reorder:0},
+  '100920':{total:-6,phys:0,reserved:0,production:101,avail:95,reorder:0},
+  '100932':{total:-1,phys:0,reserved:0,production:36,avail:35,reorder:0},
+  '100933':{total:-1,phys:0,reserved:0,production:30,avail:29,reorder:0},
+  '100934':{total:-4,phys:0,reserved:0,production:35,avail:31,reorder:0},
+  '100935':{total:-1,phys:0,reserved:0,production:43,avail:42,reorder:0},
+  '100936':{total:1,phys:1,reserved:0,production:30,avail:31,reorder:0},
+  '100976':{total:-16,phys:0,reserved:0,production:104,avail:88,reorder:0},
+  '100977':{total:-1,phys:0,reserved:0,production:38,avail:37,reorder:0},
+  '101400':{total:86,phys:56,reserved:30,production:0,avail:56,reorder:100},
+  '101402':{total:58,phys:43,reserved:15,production:0,avail:43,reorder:100},
+  '101403':{total:54,phys:45,reserved:9,production:0,avail:45,reorder:100},
+  '101404':{total:30,phys:5,reserved:25,production:0,avail:5,reorder:100},
+  '101405':{total:66,phys:30,reserved:36,production:0,avail:30,reorder:100},
+  '101406':{total:83,phys:71,reserved:12,production:0,avail:71,reorder:100},
+  '101409':{total:132,phys:102,reserved:30,production:0,avail:102,reorder:100},
+  '101411':{total:66,phys:47,reserved:19,production:0,avail:47,reorder:100},
+  '101414':{total:55,phys:5,reserved:50,production:0,avail:5,reorder:100},
+  '101417':{total:137,phys:55,reserved:82,production:0,avail:55,reorder:100},
+  '101418':{total:103,phys:83,reserved:20,production:0,avail:83,reorder:100},
+  '101419':{total:89,phys:59,reserved:30,production:0,avail:59,reorder:100},
+  '101420':{total:80,phys:39,reserved:41,production:120,avail:159,reorder:100},
+  '101429':{total:412,phys:272,reserved:140,production:20,avail:292,reorder:100},
+  '101432':{total:83,phys:74,reserved:9,production:0,avail:74,reorder:100},
+  '101433':{total:59,phys:36,reserved:23,production:0,avail:36,reorder:100},
+  '101434':{total:77,phys:34,reserved:43,production:0,avail:34,reorder:100},
+  '101435':{total:99,phys:58,reserved:41,production:0,avail:58,reorder:100},
+  '101436':{total:27,phys:0,reserved:61,production:120,avail:86,reorder:100},
+  '101444':{total:466,phys:230,reserved:236,production:60,avail:290,reorder:100},
+  '101476':{total:417,phys:165,reserved:252,production:0,avail:165,reorder:100},
+  '101477':{total:61,phys:25,reserved:36,production:120,avail:145,reorder:100},
+  '101478':{total:162,phys:53,reserved:109,production:160,avail:213,reorder:100},
+  '101620':{total:196,phys:196,reserved:0,production:44,avail:240,reorder:0},
+  '101630':{total:200,phys:200,reserved:0,production:0,avail:200,reorder:0},
+  '103020':{total:0,phys:0,reserved:0,production:18,avail:18,reorder:0},
+  '103030':{total:0,phys:0,reserved:0,production:18,avail:18,reorder:0},
+  '103420':{total:0,phys:0,reserved:18,production:180,avail:162,reorder:0},
+  '103430':{total:0,phys:0,reserved:18,production:90,avail:72,reorder:0},
+  '109506':{total:1996,phys:1968,reserved:28,production:0,avail:1968,reorder:0},
+  '109507':{total:106,phys:104,reserved:2,production:0,avail:104,reorder:0},
+  '109802':{total:2183,phys:2183,reserved:0,production:0,avail:2183,reorder:1500},
+  '109805':{total:219000,phys:219000,reserved:0,production:0,avail:219000,reorder:0},
+  '109809':{total:772,phys:772,reserved:0,production:0,avail:772,reorder:0},
+  '109826':{total:79,phys:79,reserved:0,production:0,avail:79,reorder:0},
+  '109827':{total:3022,phys:3022,reserved:0,production:0,avail:3022,reorder:0},
+  '110000':{total:166,phys:129,reserved:37,production:0,avail:129,reorder:100},
+  '110001':{total:274,phys:247,reserved:27,production:0,avail:247,reorder:100},
+  '110002':{total:165,phys:71,reserved:94,production:0,avail:71,reorder:100},
+  '110003':{total:72,phys:0,reserved:82,production:200,avail:190,reorder:100},
+  '110005':{total:342,phys:274,reserved:68,production:0,avail:274,reorder:100},
+  '110006':{total:368,phys:291,reserved:77,production:0,avail:291,reorder:100},
+  '110007':{total:27,phys:0,reserved:170,production:200,avail:57,reorder:100},
+  '110008':{total:248,phys:219,reserved:29,production:0,avail:219,reorder:100},
+  '110009':{total:125,phys:0,reserved:127,production:300,avail:298,reorder:100},
+  '110010':{total:220,phys:168,reserved:52,production:0,avail:168,reorder:100},
+  '110014':{total:165,phys:89,reserved:76,production:0,avail:89,reorder:100},
+  '110020':{total:11,phys:0,reserved:181,production:300,avail:130,reorder:100},
+  '110032':{total:225,phys:220,reserved:5,production:0,avail:220,reorder:100},
+  '110036':{total:146,phys:122,reserved:24,production:0,avail:122,reorder:100},
+  '110040':{total:366,phys:366,reserved:0,production:0,avail:366,reorder:100},
+  '110041':{total:25,phys:25,reserved:0,production:0,avail:25,reorder:10},
+  '110043':{total:1073,phys:0,reserved:2039,production:1168,avail:202,reorder:100},
+  '110044':{total:206,phys:46,reserved:160,production:600,avail:646,reorder:100},
+  '110076':{total:1638,phys:0,reserved:3161,production:966,avail:-557,reorder:100},
+  '110090':{total:1,phys:0,reserved:93,production:0,avail:-92,reorder:100},
+  '110091':{total:107,phys:107,reserved:0,production:0,avail:107,reorder:100},
+  '110900':{total:3,phys:3,reserved:0,production:37,avail:40,reorder:100},
+  '110901':{total:0,phys:0,reserved:0,production:27,avail:27,reorder:100},
+  '110902':{total:0,phys:0,reserved:0,production:22,avail:22,reorder:100},
+  '110903':{total:-2,phys:0,reserved:0,production:16,avail:14,reorder:100},
+  '110905':{total:-2,phys:0,reserved:0,production:20,avail:18,reorder:100},
+  '110906':{total:-1,phys:0,reserved:0,production:28,avail:27,reorder:100},
+  '110907':{total:-2,phys:0,reserved:0,production:3,avail:1,reorder:100},
+  '110908':{total:-2,phys:0,reserved:0,production:29,avail:27,reorder:100},
+  '110909':{total:0,phys:0,reserved:0,production:24,avail:24,reorder:100},
+  '110910':{total:0,phys:0,reserved:0,production:16,avail:16,reorder:100},
+  '110914':{total:-2,phys:0,reserved:0,production:28,avail:26,reorder:100},
+  '110920':{total:-1,phys:0,reserved:0,production:37,avail:36,reorder:100},
+  '110932':{total:-2,phys:0,reserved:0,production:3,avail:1,reorder:100},
+  '110936':{total:35,phys:35,reserved:0,production:0,avail:35,reorder:100},
+  '110976':{total:-15,phys:0,reserved:0,production:249,avail:234,reorder:100},
+  '111183':{total:1,phys:1,reserved:0,production:28,avail:29,reorder:0},
+  '111400':{total:126,phys:115,reserved:11,production:0,avail:115,reorder:0},
+  '111401':{total:57,phys:51,reserved:6,production:0,avail:51,reorder:0},
+  '111402':{total:47,phys:29,reserved:18,production:0,avail:29,reorder:0},
+  '111403':{total:84,phys:84,reserved:0,production:0,avail:84,reorder:0},
+  '111405':{total:86,phys:82,reserved:4,production:0,avail:82,reorder:0},
+  '111406':{total:26,phys:26,reserved:0,production:0,avail:26,reorder:0},
+  '111407':{total:1,phys:0,reserved:13,production:26,avail:14,reorder:0},
+  '111408':{total:39,phys:35,reserved:4,production:0,avail:35,reorder:0},
+  '111409':{total:83,phys:65,reserved:18,production:0,avail:65,reorder:0},
+  '111410':{total:61,phys:45,reserved:16,production:0,avail:45,reorder:0},
+  '111414':{total:39,phys:34,reserved:5,production:0,avail:34,reorder:0},
+  '111420':{total:18,phys:5,reserved:13,production:72,avail:77,reorder:0},
+  '111432':{total:25,phys:25,reserved:0,production:0,avail:25,reorder:0},
+  '111436':{total:196,phys:170,reserved:26,production:0,avail:170,reorder:0},
+  '111442':{total:44,phys:44,reserved:0,production:0,avail:44,reorder:0},
+  '111443':{total:365,phys:109,reserved:256,production:0,avail:109,reorder:0},
+  '111444':{total:127,phys:1,reserved:126,production:160,avail:161,reorder:0},
+  '111476':{total:34,phys:0,reserved:80,production:432,avail:386,reorder:0},
+  '111490':{total:233,phys:61,reserved:172,production:93,avail:154,reorder:0},
+  '111600':{total:0,phys:0,reserved:13,production:48,avail:35,reorder:0},
+  '119501':{total:3,phys:0,reserved:12,production:0,avail:141,reorder:0},
+  '120003':{total:191,phys:191,reserved:0,production:0,avail:191,reorder:0},
+  '120004':{total:1133,phys:1133,reserved:0,production:0,avail:1133,reorder:0},
+  '120005':{total:892,phys:892,reserved:0,production:0,avail:892,reorder:0},
+  '120006':{total:894,phys:894,reserved:0,production:0,avail:894,reorder:0},
+  '120009':{total:184,phys:184,reserved:0,production:0,avail:184,reorder:0},
+  '120010':{total:202,phys:202,reserved:0,production:0,avail:202,reorder:0},
+  '120011':{total:166,phys:166,reserved:0,production:0,avail:166,reorder:0},
+  '120012':{total:198,phys:198,reserved:0,production:0,avail:198,reorder:0},
+  '120015':{total:465,phys:465,reserved:0,production:0,avail:465,reorder:0},
+  '120016':{total:526,phys:498,reserved:28,production:0,avail:498,reorder:0},
+  '120017':{total:255,phys:255,reserved:0,production:0,avail:255,reorder:0},
+  '120018':{total:235,phys:235,reserved:0,production:0,avail:235,reorder:0},
+  '120019':{total:437,phys:437,reserved:0,production:0,avail:437,reorder:0},
+  '120020':{total:960,phys:960,reserved:0,production:0,avail:960,reorder:0},
+  '120021':{total:434,phys:434,reserved:0,production:0,avail:434,reorder:0},
+  '120022':{total:455,phys:455,reserved:0,production:0,avail:455,reorder:0},
+  '120100':{total:76,phys:68,reserved:8,production:0,avail:68,reorder:0},
+  '120103':{total:42,phys:42,reserved:0,production:0,avail:42,reorder:0},
+  '120104':{total:18,phys:18,reserved:0,production:0,avail:18,reorder:0},
+  '120105':{total:86,phys:86,reserved:0,production:0,avail:86,reorder:0},
+  '120107':{total:5,phys:5,reserved:0,production:0,avail:5,reorder:0},
+  '120108':{total:10,phys:10,reserved:0,production:0,avail:10,reorder:0},
+  '120115':{total:42,phys:42,reserved:0,production:0,avail:42,reorder:0},
+  '120116':{total:41,phys:41,reserved:0,production:0,avail:41,reorder:0},
+  '120117':{total:59,phys:59,reserved:0,production:0,avail:59,reorder:0},
+  '120118':{total:18,phys:18,reserved:0,production:0,avail:18,reorder:0},
+  '120119':{total:29,phys:29,reserved:0,production:0,avail:29,reorder:0},
+  '120120':{total:15,phys:14,reserved:1,production:0,avail:14,reorder:0},
+  '120121':{total:5,phys:5,reserved:0,production:0,avail:5,reorder:0},
+  '120122':{total:12,phys:12,reserved:0,production:0,avail:12,reorder:0},
+  '130119':{total:63,phys:63,reserved:0,production:0,avail:213,reorder:0},
+  '130120':{total:151,phys:151,reserved:0,production:0,avail:601,reorder:0},
+  '130121':{total:222,phys:211,reserved:11,production:0,avail:661,reorder:0},
+  '130135':{total:139,phys:139,reserved:0,production:0,avail:139,reorder:0},
+  '130136':{total:130,phys:129,reserved:1,production:0,avail:729,reorder:0},
+  '130137':{total:408,phys:408,reserved:0,production:0,avail:558,reorder:0},
+  '130138':{total:48,phys:48,reserved:0,production:0,avail:48,reorder:0},
+  '130139':{total:38,phys:38,reserved:0,production:0,avail:38,reorder:0},
+  '130140':{total:17,phys:17,reserved:0,production:0,avail:17,reorder:0},
+  '130141':{total:32,phys:32,reserved:0,production:0,avail:32,reorder:0},
+  '130142':{total:31,phys:31,reserved:0,production:0,avail:31,reorder:0},
+  '130143':{total:32,phys:32,reserved:0,production:0,avail:32,reorder:0},
+  '140040':{total:2493,phys:1776,reserved:717,production:0,avail:1776,reorder:0},
+  '140140':{total:57,phys:0,reserved:123,production:370,avail:304,reorder:0},
+  '140200':{total:41,phys:41,reserved:0,production:0,avail:41,reorder:0},
+  '140201':{total:23,phys:23,reserved:0,production:0,avail:23,reorder:0},
+  '140203':{total:14,phys:14,reserved:0,production:0,avail:14,reorder:0},
+  '140302':{total:153,phys:17,reserved:136,production:80,avail:97,reorder:0},
+  '140306':{total:211,phys:81,reserved:130,production:0,avail:81,reorder:0},
+  '141602':{total:0,phys:0,reserved:0,production:90,avail:90,reorder:0},
+  '141603':{total:0,phys:0,reserved:0,production:45,avail:45,reorder:0},
+  '142003':{total:6255,phys:5368,reserved:887,production:0,avail:5368,reorder:0},
+  '142007':{total:5,phys:5,reserved:0,production:0,avail:5,reorder:0},
+  '142009':{total:18181,phys:18011,reserved:170,production:0,avail:18011,reorder:0},
+  '142033':{total:18571,phys:18526,reserved:45,production:0,avail:18526,reorder:0},
+  '142036':{total:13609,phys:13564,reserved:45,production:0,avail:13564,reorder:0},
+  '142105':{total:20773,phys:20603,reserved:170,production:0,avail:20603,reorder:0},
+  '142114':{total:14892,phys:14722,reserved:170,production:0,avail:14722,reorder:0},
+  '142132':{total:19632,phys:18870,reserved:762,production:0,avail:18870,reorder:0},
+  '142135':{total:16313,phys:16268,reserved:45,production:0,avail:16268,reorder:0},
+  '142203':{total:340,phys:340,reserved:0,production:0,avail:340,reorder:0},
+  '142206':{total:1359,phys:1189,reserved:170,production:0,avail:1189,reorder:0},
+  '142207':{total:4614,phys:4444,reserved:170,production:0,avail:4444,reorder:0},
+  '142219':{total:10091,phys:10046,reserved:45,production:0,avail:10046,reorder:0},
+  '142234':{total:7506,phys:7461,reserved:45,production:0,avail:7461,reorder:0},
+  '150002':{total:83,phys:67,reserved:16,production:0,avail:67,reorder:50},
+  '150003':{total:100,phys:100,reserved:0,production:0,avail:100,reorder:20},
+  '150004':{total:1,phys:1,reserved:0,production:0,avail:1,reorder:40},
+  '150005':{total:17,phys:17,reserved:0,production:0,avail:17,reorder:40},
+  '150014':{total:106,phys:106,reserved:0,production:0,avail:106,reorder:30},
+  '150017':{total:29,phys:29,reserved:0,production:0,avail:29,reorder:0},
+  '150018':{total:53,phys:53,reserved:0,production:0,avail:53,reorder:40},
+  '150019':{total:99,phys:56,reserved:43,production:0,avail:56,reorder:50},
+  '150020':{total:14,phys:0,reserved:40,production:0,avail:-26,reorder:20},
+  '150021':{total:119,phys:88,reserved:31,production:0,avail:88,reorder:20},
+  '150032':{total:79,phys:47,reserved:32,production:0,avail:47,reorder:30},
+  '150033':{total:56,phys:24,reserved:32,production:0,avail:24,reorder:30},
+  '150034':{total:31,phys:19,reserved:12,production:0,avail:19,reorder:40},
+  '150035':{total:78,phys:10,reserved:68,production:0,avail:10,reorder:50},
+  '150036':{total:50,phys:38,reserved:12,production:0,avail:38,reorder:40},
+  '150040':{total:327,phys:97,reserved:230,production:0,avail:97,reorder:0},
+  '150041':{total:185,phys:30,reserved:155,production:0,avail:30,reorder:0},
+  '150075':{total:276,phys:164,reserved:112,production:0,avail:164,reorder:100},
+  '150300':{total:5,phys:4,reserved:1,production:0,avail:4,reorder:10},
+  '150301':{total:1,phys:0,reserved:3,production:12,avail:10,reorder:10},
+  '150640':{total:10,phys:4,reserved:6,production:30,avail:34,reorder:0},
+  '150641':{total:14,phys:9,reserved:5,production:31,avail:40,reorder:0},
+  '151402':{total:5,phys:4,reserved:1,production:16,avail:20,reorder:20},
+  '151403':{total:19,phys:19,reserved:0,production:0,avail:19,reorder:20},
+  '151404':{total:42,phys:41,reserved:1,production:0,avail:41,reorder:20},
+  '151405':{total:74,phys:74,reserved:0,production:0,avail:74,reorder:20},
+  '151414':{total:13,phys:13,reserved:0,production:0,avail:13,reorder:20},
+  '151418':{total:41,phys:41,reserved:0,production:0,avail:41,reorder:20},
+  '151419':{total:42,phys:38,reserved:4,production:0,avail:38,reorder:40},
+  '151420':{total:33,phys:29,reserved:4,production:9,avail:38,reorder:20},
+  '151421':{total:30,phys:25,reserved:5,production:0,avail:25,reorder:20},
+  '151432':{total:6,phys:6,reserved:0,production:20,avail:26,reorder:20},
+  '151433':{total:13,phys:13,reserved:0,production:20,avail:33,reorder:20},
+  '151434':{total:53,phys:53,reserved:0,production:0,avail:53,reorder:30},
+  '151435':{total:19,phys:16,reserved:3,production:26,avail:42,reorder:30},
+  '151436':{total:37,phys:36,reserved:1,production:0,avail:36,reorder:30},
+  '151441':{total:41,phys:13,reserved:28,production:6,avail:19,reorder:0},
+  '151475':{total:28,phys:11,reserved:17,production:103,avail:114,reorder:100},
+  '160002':{total:2384,phys:1904,reserved:480,production:100,avail:2004,reorder:0},
+  '160003':{total:2476,phys:1996,reserved:480,production:0,avail:1996,reorder:0},
+  '160004':{total:1168,phys:688,reserved:480,production:0,avail:688,reorder:0},
+  '160005':{total:7,phys:7,reserved:0,production:0,avail:7,reorder:0},
+  '160014':{total:2072,phys:1592,reserved:480,production:450,avail:2042,reorder:0},
+  '160018':{total:2452,phys:1972,reserved:480,production:100,avail:2072,reorder:0},
+  '160019':{total:2462,phys:1902,reserved:560,production:950,avail:2852,reorder:0},
+  '160032':{total:2231,phys:1671,reserved:560,production:0,avail:1671,reorder:0},
+  '160033':{total:2379,phys:1819,reserved:560,production:0,avail:1819,reorder:0},
+  '160034':{total:-7,phys:0,reserved:560,production:3000,avail:2433,reorder:0},
+  '160035':{total:2231,phys:1671,reserved:560,production:0,avail:1671,reorder:0},
+  '160036':{total:2580,phys:2020,reserved:560,production:0,avail:2020,reorder:0},
+  '160040':{total:1391,phys:0,reserved:3110,production:51,avail:-1668,reorder:0},
+  '160075':{total:1278,phys:1268,reserved:10,production:0,avail:1268,reorder:0},
+  '160090':{total:231,phys:231,reserved:0,production:0,avail:231,reorder:0},
+  '160091':{total:618,phys:618,reserved:0,production:0,avail:618,reorder:0},
+  '160092':{total:500,phys:500,reserved:0,production:0,avail:500,reorder:0},
+  '160300':{total:685,phys:572,reserved:113,production:0,avail:572,reorder:0},
+  '160330':{total:155,phys:0,reserved:169,production:560,avail:546,reorder:0},
+  '161240':{total:22,phys:17,reserved:5,production:1,avail:18,reorder:0},
+  '161475':{total:51,phys:51,reserved:0,production:0,avail:51,reorder:100},
+  '161621':{total:258,phys:148,reserved:110,production:480,avail:628,reorder:0},
+  '161631':{total:672,phys:537,reserved:135,production:0,avail:537,reorder:0},
+  '170040':{total:135,phys:135,reserved:0,production:0,avail:135,reorder:0},
+  '170300':{total:72,phys:68,reserved:4,production:0,avail:68,reorder:0},
+  '172105':{total:226,phys:226,reserved:0,production:0,avail:226,reorder:0},
+  '172114':{total:174,phys:174,reserved:0,production:0,avail:174,reorder:0},
+  '172135':{total:172,phys:172,reserved:0,production:0,avail:172,reorder:0},
+  '172201':{total:1338,phys:1338,reserved:0,production:0,avail:1338,reorder:0},
+  '172204':{total:1009,phys:1009,reserved:0,production:0,avail:1009,reorder:0},
+  '172219':{total:1326,phys:1326,reserved:0,production:0,avail:1326,reorder:0},
+  '172234':{total:849,phys:849,reserved:0,production:0,avail:849,reorder:0},
+  '180000':{total:642,phys:642,reserved:0,production:0,avail:642,reorder:0},
+  '180002':{total:846,phys:846,reserved:0,production:0,avail:846,reorder:0},
+  '180003':{total:3487,phys:3472,reserved:15,production:0,avail:3472,reorder:0},
+  '180004':{total:1498,phys:1478,reserved:20,production:0,avail:1478,reorder:0},
+  '180005':{total:143,phys:123,reserved:20,production:0,avail:123,reorder:0},
+  '180006':{total:363,phys:363,reserved:0,production:0,avail:363,reorder:0},
+  '180009':{total:1659,phys:1659,reserved:0,production:0,avail:1659,reorder:0},
+  '180011':{total:791,phys:791,reserved:0,production:0,avail:791,reorder:0},
+  '180014':{total:1258,phys:1238,reserved:20,production:0,avail:1238,reorder:0},
+  '180017':{total:778,phys:778,reserved:0,production:0,avail:778,reorder:0},
+  '180018':{total:2024,phys:2004,reserved:20,production:0,avail:2004,reorder:0},
+  '180019':{total:929,phys:789,reserved:140,production:0,avail:789,reorder:0},
+  '180020':{total:1800,phys:1800,reserved:0,production:50,avail:1850,reorder:0},
+  '180029':{total:411,phys:411,reserved:0,production:0,avail:411,reorder:0},
+  '180032':{total:3822,phys:3675,reserved:147,production:81,avail:3756,reorder:0},
+  '180033':{total:316,phys:176,reserved:140,production:0,avail:176,reorder:0},
+  '180034':{total:2999,phys:2839,reserved:160,production:0,avail:2839,reorder:0},
+  '180035':{total:3034,phys:2894,reserved:140,production:0,avail:2894,reorder:0},
+  '180036':{total:3637,phys:3497,reserved:140,production:0,avail:3497,reorder:0},
+  '180041':{total:272,phys:272,reserved:0,production:0,avail:272,reorder:0},
+  '180280':{total:21,phys:21,reserved:0,production:0,avail:21,reorder:0},
+  '180320':{total:144,phys:141,reserved:3,production:0,avail:141,reorder:0},
+  '180330':{total:47,phys:45,reserved:2,production:140,avail:185,reorder:0},
+  '180380':{total:1,phys:1,reserved:0,production:20,avail:21,reorder:0},
+  '180600':{total:73,phys:72,reserved:1,production:0,avail:72,reorder:0},
+  '181418':{total:2,phys:2,reserved:0,production:0,avail:2,reorder:100},
+  '181600':{total:76,phys:75,reserved:1,production:0,avail:75,reorder:0},
+  '181801':{total:4,phys:4,reserved:0,production:0,avail:4,reorder:0},
+  '181802':{total:29,phys:29,reserved:0,production:0,avail:29,reorder:0},
+  '190001':{total:0,phys:0,reserved:0,production:5,avail:5,reorder:100},
+  '190002':{total:28,phys:28,reserved:0,production:0,avail:28,reorder:100},
+  '190009':{total:38,phys:38,reserved:0,production:0,avail:38,reorder:100},
+  '190020':{total:142,phys:142,reserved:0,production:0,avail:142,reorder:100},
+  '190030':{total:3,phys:3,reserved:0,production:0,avail:3,reorder:100},
+  '190031':{total:36,phys:36,reserved:0,production:0,avail:36,reorder:0},
+  '190044':{total:91,phys:91,reserved:0,production:0,avail:91,reorder:0},
+  '200101':{total:49,phys:48,reserved:1,production:0,avail:48,reorder:0},
+  '200103':{total:81,phys:72,reserved:9,production:0,avail:72,reorder:0},
+  '200104':{total:18,phys:14,reserved:4,production:0,avail:14,reorder:0},
+  '200105':{total:89,phys:66,reserved:23,production:0,avail:66,reorder:0},
+  '200106':{total:29,phys:29,reserved:0,production:0,avail:29,reorder:0},
+  '200110':{total:102,phys:35,reserved:67,production:0,avail:35,reorder:0},
+  '200111':{total:23,phys:0,reserved:73,production:96,avail:46,reorder:0},
+  '200170':{total:110,phys:72,reserved:38,production:48,avail:120,reorder:0},
+  '200210':{total:95,phys:66,reserved:29,production:0,avail:66,reorder:0},
+  '200211':{total:203,phys:192,reserved:11,production:0,avail:192,reorder:0},
+  '200270':{total:77,phys:54,reserved:23,production:0,avail:54,reorder:0},
+  '200290':{total:34,phys:23,reserved:11,production:0,avail:23,reorder:0},
+  '200291':{total:38,phys:28,reserved:10,production:0,avail:28,reorder:0},
+  '200401':{total:50,phys:17,reserved:33,production:0,avail:17,reorder:0},
+  '200402':{total:60,phys:42,reserved:18,production:0,avail:42,reorder:0},
+  '200490':{total:83,phys:67,reserved:16,production:0,avail:67,reorder:0},
+  '200601':{total:58,phys:57,reserved:1,production:0,avail:57,reorder:0},
+  '201605':{total:131,phys:0,reserved:347,production:583,avail:367,reorder:0},
+  '201606':{total:734,phys:255,reserved:479,production:595,avail:850,reorder:0},
+  '201690':{total:41,phys:30,reserved:11,production:0,avail:30,reorder:0},
+  '201802':{total:19,phys:16,reserved:3,production:0,avail:16,reorder:0},
+  '201823':{total:4,phys:4,reserved:0,production:0,avail:4,reorder:0},
+  '201830':{total:12,phys:10,reserved:2,production:0,avail:10,reorder:0},
+  '201842':{total:2,phys:2,reserved:0,production:0,avail:2,reorder:0},
+  '201900':{total:26,phys:24,reserved:2,production:70,avail:94,reorder:0},
+  '201901':{total:19,phys:18,reserved:1,production:70,avail:88,reorder:0},
+  '203110':{total:27,phys:18,reserved:9,production:0,avail:18,reorder:0},
+  '211901':{total:6,phys:6,reserved:0,production:0,avail:6,reorder:0},
+  '220002':{total:72,phys:72,reserved:0,production:0,avail:72,reorder:0},
+  '220004':{total:11,phys:11,reserved:0,production:0,avail:11,reorder:0},
+  '220005':{total:15,phys:15,reserved:0,production:0,avail:15,reorder:0},
+  '220014':{total:75,phys:75,reserved:0,production:0,avail:75,reorder:0},
+  '220018':{total:171,phys:171,reserved:0,production:0,avail:171,reorder:0},
+  '220019':{total:173,phys:173,reserved:0,production:0,avail:173,reorder:0},
+  '220020':{total:584,phys:584,reserved:0,production:0,avail:584,reorder:0},
+  '220032':{total:150,phys:150,reserved:0,production:0,avail:150,reorder:0},
+  '220033':{total:306,phys:306,reserved:0,production:0,avail:306,reorder:0},
+  '220034':{total:154,phys:154,reserved:0,production:0,avail:154,reorder:0},
+  '220035':{total:327,phys:327,reserved:0,production:0,avail:327,reorder:0},
+  '220036':{total:225,phys:225,reserved:0,production:0,avail:225,reorder:0},
+  '220041':{total:139,phys:139,reserved:0,production:0,avail:139,reorder:0},
+  '220099':{total:5,phys:5,reserved:0,production:0,avail:5,reorder:0},
+  '220200':{total:11,phys:11,reserved:0,production:0,avail:11,reorder:0},
+  '220300':{total:3,phys:3,reserved:0,production:0,avail:3,reorder:0},
+  '220604':{total:11,phys:0,reserved:64,production:149,avail:96,reorder:0},
+  '223504':{total:87,phys:0,reserved:143,production:122,avail:66,reorder:0},
+  '230002':{total:290,phys:290,reserved:0,production:0,avail:290,reorder:0},
+  '230003':{total:276,phys:276,reserved:0,production:0,avail:276,reorder:0},
+  '230004':{total:117,phys:117,reserved:0,production:0,avail:117,reorder:0},
+  '230005':{total:335,phys:335,reserved:0,production:0,avail:335,reorder:0},
+  '230014':{total:1001,phys:1001,reserved:0,production:0,avail:1001,reorder:0},
+  '230018':{total:607,phys:607,reserved:0,production:20,avail:627,reorder:0},
+  '230019':{total:676,phys:676,reserved:0,production:0,avail:676,reorder:0},
+  '230032':{total:1563,phys:1563,reserved:0,production:0,avail:1563,reorder:0},
+  '230033':{total:991,phys:991,reserved:0,production:20,avail:1011,reorder:0},
+  '230034':{total:220,phys:220,reserved:0,production:0,avail:220,reorder:0},
+  '230035':{total:1626,phys:1626,reserved:0,production:0,avail:1626,reorder:0},
+  '230036':{total:1783,phys:1783,reserved:0,production:0,avail:1783,reorder:0},
+  '230300':{total:43,phys:43,reserved:0,production:0,avail:43,reorder:0},
+  '240119':{total:40,phys:40,reserved:0,production:0,avail:40,reorder:0},
+  '240120':{total:74,phys:74,reserved:0,production:0,avail:74,reorder:0},
+  '240121':{total:13,phys:13,reserved:0,production:0,avail:13,reorder:0},
+  '240135':{total:16,phys:16,reserved:0,production:0,avail:16,reorder:0},
+  '240136':{total:10,phys:10,reserved:0,production:0,avail:10,reorder:0},
+  '240137':{total:51,phys:51,reserved:0,production:0,avail:51,reorder:0},
+  '240138':{total:29,phys:29,reserved:0,production:0,avail:29,reorder:0},
+  '240139':{total:36,phys:36,reserved:0,production:0,avail:36,reorder:0},
+  '250020':{total:7,phys:7,reserved:0,production:0,avail:7,reorder:0},
+  '250022':{total:1,phys:1,reserved:0,production:0,avail:1,reorder:0},
+  '250023':{total:2,phys:2,reserved:0,production:0,avail:2,reorder:0},
+  '250024':{total:4,phys:4,reserved:0,production:0,avail:4,reorder:0},
+  '250025':{total:48,phys:48,reserved:0,production:0,avail:48,reorder:0},
+  '250026':{total:6,phys:6,reserved:0,production:0,avail:6,reorder:0},
+  '250027':{total:434,phys:434,reserved:0,production:0,avail:434,reorder:0},
+  '250028':{total:12,phys:12,reserved:0,production:0,avail:12,reorder:0},
+  '250030':{total:19,phys:19,reserved:0,production:0,avail:19,reorder:0},
+  '250031':{total:18,phys:18,reserved:0,production:0,avail:18,reorder:0},
+  '250032':{total:12,phys:12,reserved:0,production:0,avail:12,reorder:0},
+  '250033':{total:10,phys:10,reserved:0,production:0,avail:10,reorder:0},
+  '250034':{total:11,phys:11,reserved:0,production:0,avail:11,reorder:0},
+  '250035':{total:12,phys:12,reserved:0,production:0,avail:12,reorder:0},
+  '250036':{total:6,phys:6,reserved:0,production:0,avail:6,reorder:0},
+  '250080':{total:20,phys:20,reserved:0,production:0,avail:20,reorder:500},
+  '250081':{total:100,phys:100,reserved:0,production:0,avail:100,reorder:500},
+  '251480':{total:1,phys:1,reserved:0,production:0,avail:1,reorder:100},
+  '260020':{total:192,phys:24,reserved:168,production:57,avail:81,reorder:0},
+  '260022':{total:232,phys:79,reserved:153,production:128,avail:207,reorder:0},
+  '260023':{total:615,phys:407,reserved:208,production:0,avail:407,reorder:0},
+  '260024':{total:1,phys:1,reserved:0,production:0,avail:1,reorder:0},
+  '260025':{total:8,phys:8,reserved:0,production:0,avail:8,reorder:0},
+  '260031':{total:8,phys:8,reserved:0,production:0,avail:8,reorder:0},
+  '260070':{total:401,phys:17,reserved:384,production:500,avail:517,reorder:0},
+  '260140':{total:45,phys:24,reserved:21,production:0,avail:24,reorder:0},
+  '260240':{total:81,phys:0,reserved:81,production:84,avail:84,reorder:0},
+  '260440':{total:24,phys:6,reserved:18,production:6,avail:12,reorder:0},
+  '260640':{total:47,phys:15,reserved:32,production:0,avail:15,reorder:0},
+  '261420':{total:63,phys:38,reserved:25,production:168,avail:206,reorder:0},
+  '261422':{total:55,phys:36,reserved:19,production:57,avail:93,reorder:0},
+  '261423':{total:141,phys:72,reserved:69,production:48,avail:120,reorder:0},
+  '261425':{total:145,phys:87,reserved:58,production:66,avail:153,reorder:0},
+  '261440':{total:105,phys:64,reserved:41,production:0,avail:64,reorder:0},
+  '261470':{total:196,phys:67,reserved:129,production:324,avail:391,reorder:0},
+  '263540':{total:48,phys:8,reserved:40,production:38,avail:46,reorder:0},
+  '270020':{total:72,phys:72,reserved:0,production:0,avail:72,reorder:0},
+  '270021':{total:362,phys:62,reserved:300,production:0,avail:2362,reorder:0},
+  '270030':{total:0,phys:0,reserved:360,production:0,avail:2040,reorder:0},
+  '270031':{total:0,phys:0,reserved:0,production:0,avail:2400,reorder:0},
+  '270032':{total:0,phys:0,reserved:0,production:0,avail:2400,reorder:0},
+  '271420':{total:593,phys:582,reserved:11,production:0,avail:582,reorder:0},
+  '271421':{total:211,phys:23,reserved:188,production:300,avail:323,reorder:0},
+  '271430':{total:-8,phys:0,reserved:33,production:360,avail:319,reorder:0},
+  '280020':{total:20,phys:20,reserved:0,production:0,avail:20,reorder:0},
+  '280022':{total:166,phys:166,reserved:0,production:0,avail:166,reorder:0},
+  '280025':{total:23,phys:23,reserved:0,production:0,avail:23,reorder:0},
+  '280070':{total:10,phys:10,reserved:0,production:0,avail:10,reorder:0},
+  '281401':{total:47,phys:47,reserved:0,production:0,avail:47,reorder:0},
+  '440002':{total:2,phys:2,reserved:0,production:0,avail:2,reorder:0},
+  '44001':{total:1,phys:1,reserved:0,production:0,avail:1,reorder:0},
+  '500000':{total:20,phys:19,reserved:1,production:0,avail:19,reorder:0},
+  '500001':{total:669,phys:589,reserved:80,production:0,avail:589,reorder:0},
+  '500002':{total:109,phys:9,reserved:100,production:0,avail:9,reorder:0},
+  '500042':{total:239,phys:239,reserved:0,production:0,avail:239,reorder:0},
+  '500043':{total:96,phys:96,reserved:0,production:0,avail:96,reorder:0},
+  '501420':{total:33,phys:31,reserved:2,production:0,avail:1531,reorder:0},
+  '501421':{total:296,phys:295,reserved:1,production:0,avail:1695,reorder:0},
+  '501430':{total:299,phys:297,reserved:2,production:0,avail:1397,reorder:0},
+  '501620':{total:71,phys:22,reserved:49,production:0,avail:22,reorder:0},
+  '501630':{total:69,phys:49,reserved:20,production:0,avail:49,reorder:0},
+  '600003':{total:1058,phys:1058,reserved:0,production:0,avail:1058,reorder:450},
+  '600005':{total:944,phys:944,reserved:0,production:0,avail:944,reorder:450},
+  '600014':{total:1016,phys:1016,reserved:0,production:0,avail:1016,reorder:450},
+  '700003':{total:4,phys:4,reserved:0,production:0,avail:4,reorder:450},
+  '700005':{total:4,phys:4,reserved:0,production:0,avail:4,reorder:450},
+  '700014':{total:4,phys:4,reserved:0,production:0,avail:4,reorder:450},
+  '808001':{total:3500,phys:3460,reserved:40,production:0,avail:7460,reorder:3000},
+  '808002':{total:2160,phys:2160,reserved:0,production:0,avail:2160,reorder:2000},
+  '808003':{total:6380,phys:6290,reserved:90,production:0,avail:6290,reorder:4000},
+  '808004':{total:720,phys:720,reserved:0,production:0,avail:720,reorder:500},
+  '808005':{total:3840,phys:2850,reserved:990,production:0,avail:7850,reorder:5000},
+  '808006':{total:1158,phys:1158,reserved:0,production:0,avail:1158,reorder:500},
+  '808007':{total:1835,phys:1835,reserved:0,production:0,avail:1835,reorder:1000},
+  '808009':{total:4380,phys:4050,reserved:330,production:0,avail:4050,reorder:3500},
+  '808010':{total:519,phys:518,reserved:1,production:0,avail:518,reorder:500},
+  '808012':{total:2058,phys:2058,reserved:0,production:0,avail:2058,reorder:1300},
+  '808013':{total:860,phys:860,reserved:0,production:0,avail:860,reorder:800},
+  '808014':{total:330,phys:330,reserved:0,production:0,avail:330,reorder:110},
+  '808015':{total:800,phys:800,reserved:0,production:0,avail:2800,reorder:1000},
+  '808016':{total:5100,phys:5100,reserved:0,production:0,avail:5100,reorder:4000},
+  '808017':{total:7217,phys:7217,reserved:0,production:0,avail:7217,reorder:5000},
+  '808018':{total:27,phys:27,reserved:0,production:0,avail:27,reorder:0},
+  '808019':{total:4760,phys:4639,reserved:121,production:0,avail:4639,reorder:1500},
+  '808020':{total:960,phys:960,reserved:0,production:0,avail:960,reorder:500},
+  '808021':{total:360,phys:360,reserved:0,production:0,avail:360,reorder:0},
+  '808022':{total:15600,phys:15230,reserved:370,production:0,avail:15230,reorder:15000},
+  '808023':{total:2881,phys:2881,reserved:0,production:0,avail:2881,reorder:2000},
+  '808024':{total:8697,phys:8697,reserved:0,production:0,avail:8697,reorder:1600},
+  '808025':{total:68,phys:68,reserved:0,production:0,avail:68,reorder:500},
+  '808026':{total:1080,phys:1080,reserved:0,production:0,avail:3080,reorder:2000},
+  '808027':{total:1210,phys:1058,reserved:152,production:0,avail:3058,reorder:2000},
+  '809040':{total:6687,phys:3697,reserved:2990,production:0,avail:3697,reorder:500},
+  '809800':{total:1937,phys:1889,reserved:48,production:0,avail:1889,reorder:0},
+  '809801':{total:750,phys:750,reserved:0,production:0,avail:750,reorder:0},
+  '809802':{total:1409,phys:1409,reserved:0,production:0,avail:1409,reorder:5000},
+  '809810':{total:288,phys:284,reserved:4,production:0,avail:284,reorder:400},
+  '809813':{total:12006,phys:11359,reserved:647,production:0,avail:11359,reorder:5000},
+  '809816':{total:47,phys:47,reserved:0,production:0,avail:47,reorder:0},
+  '809817':{total:75547,phys:65302,reserved:10245,production:0,avail:65302,reorder:5000},
+  '809871':{total:9067,phys:8301,reserved:766,production:0,avail:8301,reorder:0},
+  '809880':{total:1693,phys:1693,reserved:0,production:0,avail:1693,reorder:0},
+  '809881':{total:826,phys:745,reserved:81,production:0,avail:745,reorder:5000},
+  '900010':{total:445,phys:435,reserved:10,production:0,avail:435,reorder:0},
+  '900011':{total:468,phys:448,reserved:20,production:0,avail:448,reorder:0},
+  '900012':{total:710,phys:690,reserved:20,production:0,avail:690,reorder:0},
+  '906002':{total:64,phys:60,reserved:4,production:0,avail:60,reorder:0},
+  '906003':{total:62,phys:61,reserved:1,production:0,avail:61,reorder:0},
+  '906004':{total:32,phys:30,reserved:2,production:0,avail:30,reorder:0},
+  '906021':{total:200,phys:200,reserved:0,production:0,avail:200,reorder:0},
+  '906022':{total:2,phys:2,reserved:0,production:0,avail:2,reorder:0},
+  '906040':{total:77,phys:72,reserved:5,production:0,avail:72,reorder:0},
+  '906041':{total:89,phys:82,reserved:7,production:0,avail:82,reorder:0},
+  '906042':{total:150,phys:150,reserved:0,production:0,avail:150,reorder:0},
+  '906090':{total:69,phys:69,reserved:0,production:0,avail:69,reorder:0},
+  '906091':{total:12,phys:12,reserved:0,production:0,avail:12,reorder:0},
+  '906092':{total:20,phys:20,reserved:0,production:0,avail:20,reorder:0},
+  '906093':{total:68,phys:67,reserved:1,production:0,avail:67,reorder:0},
+  '906094':{total:56,phys:56,reserved:0,production:0,avail:56,reorder:0}
+};
+
+
+// Demo previous snapshot (simulated delta)
+const DEMO_PREV = {
+  '100000':{avail:391},
+  '100002':{avail:10793},
+  '100003':{avail:7051},
+  '100004':{avail:6969},
+  '100005':{avail:7087},
+  '100006':{avail:-91},
+  '100009':{avail:427},
+  '100011':{avail:8},
+  '100014':{avail:5702},
+  '100017':{avail:-109},
+  '100018':{avail:3541},
+  '100019':{avail:3408},
+  '100020':{avail:340},
+  '100029':{avail:444},
+  '100032':{avail:6496},
+  '100033':{avail:5484},
+  '100034':{avail:8479},
+  '100035':{avail:4448},
+  '100036':{avail:3793},
+  '100209':{avail:834},
+  '100210':{avail:702},
+  '100211':{avail:31},
+  '100233':{avail:757},
+  '100235':{avail:792},
+  '100280':{avail:4307},
+  '100307':{avail:6986},
+  '100319':{avail:168},
+  '100331':{avail:3588},
+  '100900':{avail:626},
+  '100902':{avail:-53},
+  '100903':{avail:79},
+  '100904':{avail:204},
+  '100905':{avail:290},
+  '100906':{avail:180},
+  '100909':{avail:99},
+  '100911':{avail:65},
+  '100914':{avail:-90},
+  '100917':{avail:1459},
+  '100918':{avail:51},
+  '100919':{avail:593},
+  '100920':{avail:1521},
+  '100932':{avail:92},
+  '100933':{avail:227},
+  '100934':{avail:207},
+  '100935':{avail:397},
+  '100936':{avail:-159},
+  '100976':{avail:1779},
+  '100977':{avail:1369},
+  '100978':{avail:406},
+  '110040':{avail:1832},
+  '110900':{avail:52},
+  '110901':{avail:127},
+  '110902':{avail:464},
+  '110903':{avail:60},
+  '110905':{avail:116},
+  '110906':{avail:303},
+  '110907':{avail:198},
+  '110908':{avail:144},
+  '110909':{avail:383},
+  '110910':{avail:29},
+  '110914':{avail:99},
+  '110920':{avail:702},
+  '110932':{avail:62},
+  '110936':{avail:1843},
+  '110976':{avail:6639},
+  '111600':{avail:279},
+  '120115':{avail:195},
+  '120119':{avail:144},
+  '130137':{avail:214},
+  '130138':{avail:386},
+  '130139':{avail:228},
+  '140200':{avail:-75},
+  '140201':{avail:-142},
+  '140302':{avail:67},
+  '140306':{avail:-15},
+  '150200':{avail:-74},
+  '150300':{avail:131},
+  '150301':{avail:189},
+  '150640':{avail:96},
+  '150641':{avail:-155},
+  '151402':{avail:338},
+  '151403':{avail:321},
+  '151404':{avail:-92},
+  '151405':{avail:-4},
+  '151414':{avail:6},
+  '151418':{avail:399},
+  '151419':{avail:-49},
+  '151420':{avail:854},
+  '151421':{avail:145},
+  '151432':{avail:-86},
+  '151433':{avail:270},
+  '151434':{avail:373},
+  '151435':{avail:370},
+  '151436':{avail:-137},
+  '151475':{avail:1937},
+  '160300':{avail:3432},
+  '160330':{avail:1793},
+  '161475':{avail:43},
+  '161620':{avail:2439},
+  '161630':{avail:49},
+  '180280':{avail:227},
+  '180380':{avail:-90},
+  '181600':{avail:28},
+  '200103':{avail:668},
+  '200104':{avail:390},
+  '200105':{avail:294},
+  '200106':{avail:-141},
+  '200110':{avail:528},
+  '200111':{avail:1396},
+  '200170':{avail:904},
+  '200181':{avail:247},
+  '200182':{avail:226},
+  '200210':{avail:1732},
+  '200211':{avail:595},
+  '200270':{avail:938},
+  '200281':{avail:-90},
+  '200282':{avail:-104},
+  '200283':{avail:-100},
+  '200284':{avail:-71},
+  '200285':{avail:290},
+  '200290':{avail:418},
+  '200291':{avail:613},
+  '200401':{avail:720},
+  '200402':{avail:274},
+  '200444':{avail:882},
+  '200445':{avail:1041},
+  '200490':{avail:538},
+  '201605':{avail:682},
+  '201606':{avail:4595},
+  '201690':{avail:-87},
+  '201802':{avail:152},
+  '201830':{avail:-11},
+  '203020':{avail:222},
+  '203030':{avail:289},
+  '203110':{avail:315},
+  '203220':{avail:-132},
+  '203230':{avail:90},
+  '261420':{avail:2334},
+  '261422':{avail:-73},
+  '261423':{avail:158},
+  '261470':{avail:98},
+  '271421':{avail:-33},
+  '271430':{avail:590},
+  '501542':{avail:948},
+  '501543':{avail:1792},
+  '501620':{avail:1118},
+  '501630':{avail:923},
+  '808022':{avail:259},
+};
+
+
+const SKU_NAMES = {
+  '100000':'Schwarz','100002':'Emerald','100003':'Mango','100004':'Cranberry',
+  '100005':'Sapphire','100006':'Metallic-Grey','100009':'Blueberry','100011':'Lime',
+  '100014':'Orange','100017':'Dragonfruit','100018':'Lavender','100019':'Mintgrün',
+  '100020':'Forest Green','100029':'Pastel Pink','100032':'Pale Orange',
+  '100033':'Pale Mustard','100034':'Light Pink','100035':'Light Blue','100036':'Pale Lavender',
+};
+
+// Product line config — order, label, icon, which SKUs belong to it
+const PRODUCT_LINES = [
+  { id:'Original', label:'Original · Single Colors', icon:'⬤', hasBom: false },
+  { id:'Set',      label:'Sets · Rainbow',            icon:'◈', hasBom: true  },
+  { id:'Mini',     label:'Mini',                      icon:'◉', hasBom: false },
+  { id:'Grow',     label:'Grow',                      icon:'◐', hasBom: false },
+  { id:'Inside',   label:'Inside',                    icon:'◧', hasBom: false },
+  { id:'Board',    label:'Board',                     icon:'▭', hasBom: false },
+  { id:'Dynamic',  label:'Dynamic',                   icon:'◈', hasBom: false },
+  { id:'Mat',      label:'Mat & Pad',                 icon:'▬', hasBom: false },
+];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let state = {
+  current: null, prev: null,
+  dataDate: null, prevDate: null,
+  filter: 'all',
+  activeCategory: 'all',
+  collapsed: {},
+};
+
+// ═══════════════════════════════════════════
+// FETCH LIVE DATA
+// ═══════════════════════════════════════════
+async function fetchData() {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+    useDemoData(); return;
+  }
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res  = await fetch('/api/inventory', { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    state.current  = normalizeKeys(data.current);
+    state.prev     = data.prev ? normalizeKeys(data.prev) : null;
+    state.dataDate = data.date;
+    state.prevDate = data.prevDate;
+    document.getElementById('liveLabel').textContent = 'live';
+  } catch(e) {
+    console.warn('Live fetch failed, using demo data', e);
+    useDemoData();
+    document.getElementById('errorBar').style.display = 'block';
+  }
+}
+
+function normalizeKeys(obj) {
+  // Ensure all SKU keys are strings (live data might parse them as numbers)
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    out[String(k)] = v;
+  }
+  return out;
+}
+function useDemoData() {
+  state.current  = normalizeKeys(DEMO_CURRENT);
+  state.prev     = normalizeKeys(DEMO_PREV);
+  state.dataDate = '2026-03-12';
+  state.prevDate = '2026-03-12';
+  document.getElementById('liveLabel').textContent = 'demo data';
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function fmt(n) {
+  if (n == null || isNaN(n)) return '—';
+  return Math.round(n).toLocaleString('en-US');
+}
+function getStatus(sku) {
+  const d = state.current[sku];
+  if (!d) return 'na';
+  const ratio = d.reorder > 0 ? d.avail / d.reorder : 99;
+  if (d.avail < 0 || (d.reorder > 0 && ratio < 0.5)) return 'crit';
+  if (d.reorder > 0 && ratio < 1.0) return 'low';
+  return 'ok';
+}
+function statusBadge(s) {
+  if (s==='ok')   return `<span class="badge badge-ok"><span class="badge-dot"></span>Healthy</span>`;
+  if (s==='low')  return `<span class="badge badge-low"><span class="badge-dot"></span>Low</span>`;
+  if (s==='crit') return `<span class="badge badge-crit"><span class="badge-dot"></span>Critical</span>`;
+  return `<span class="badge badge-na">No data</span>`;
+}
+function deltaHtml(sku) {
+  if (!state.prev || !state.prev[sku]) return '<span class="delta-cell" style="color:var(--ink4)">—</span>';
+  const curr = state.current[sku]?.avail ?? 0;
+  const prev = state.prev[sku]?.avail ?? 0;
+  const diff = curr - prev;
+  if (diff===0) return `<span class="delta-cell delta-flat">±0</span>`;
+  const sign = diff>0?'↑':'↓';
+  const cls  = diff>0?'delta-up':'delta-down';
+  return `<span class="delta-cell ${cls}">${sign} ${fmt(Math.abs(diff))}</span>`;
+}
+function covBar(pct, color) {
+  const w = Math.min(100, Math.max(0, pct*100));
+  return `<div class="cov-bar-bg"><div class="cov-bar-fill" style="width:${w}%;background:${color}"></div></div>`;
+}
+function covHtml(sku, mIdx) {
+  const fc = FORECAST[sku];
+  if (!fc) return '<span style="color:var(--ink4);font-size:11px">—</span>';
+  const mFc_d2c = fc.d2c[mIdx]||0;
+  const mFc_b2b = fc.b2b[mIdx]||0;
+  const mFc_tot = mFc_d2c + mFc_b2b;
+  if (mFc_tot===0) return '<span style="color:var(--ink4);font-size:11px">No forecast</span>';
+  const avail = state.current[sku]?.avail ?? 0;
+  const cov = avail / mFc_tot;
+  const covColor = cov>=2?'var(--green)':cov>=1?'var(--amber)':'var(--red)';
+  return `<div class="cov-wrap">
+    <div class="cov-row"><span class="cov-lbl">D2C</span>${covBar(mFc_d2c/Math.max(mFc_tot,1),'var(--blue)')}<span class="cov-num">${fmt(mFc_d2c)}</span></div>
+    <div class="cov-row"><span class="cov-lbl">B2B</span>${covBar(mFc_b2b/Math.max(mFc_tot,1),'var(--green)')}<span class="cov-num">${fmt(mFc_b2b)}</span></div>
+    <div class="cov-row" style="margin-top:2px"><span class="cov-lbl" style="color:var(--ink3);font-weight:600">Cov</span>
+    <span style="font-family:'Instrument Mono',monospace;font-size:11px;color:${covColor};font-weight:600">${cov>9?'>9×':cov.toFixed(1)+'×'}</span></div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+// SUMMARY CARDS
+// ═══════════════════════════════════════════
+function renderSummary() {
+  const cur = state.current;
+  const allSkus = Object.keys(cur);
+  let totalPhys=0, totalAvail=0, crit=0, low=0;
+  allSkus.forEach(s => {
+    totalPhys  += cur[s]?.phys  ?? 0;
+    totalAvail += cur[s]?.avail ?? 0;
+    const st = getStatus(s);
+    if (st==='crit') crit++;
+    if (st==='low')  low++;
+  });
+  const prevAvail = state.prev ? allSkus.reduce((a,s)=>a+(state.prev[s]?.avail??0),0) : null;
+  const delta = prevAvail!=null ? totalAvail-prevAvail : null;
+  const dStr = delta==null?'':delta===0
+    ?`<div class="s-delta delta-flat">±0 vs prev</div>`
+    :`<div class="s-delta ${delta>0?'delta-up':'delta-down'}">${delta>0?'↑':'↓'} ${fmt(Math.abs(delta))} vs prev</div>`;
+  document.getElementById('summaryRow').innerHTML = `
+    <div class="s-card"><div class="s-label">Physically Available</div><div class="s-value">${(totalPhys/1000).toFixed(1)}k</div><div class="s-sub">units ready to ship</div></div>
+    <div class="s-card"><div class="s-label">Net Available</div><div class="s-value">${(totalAvail/1000).toFixed(1)}k</div><div class="s-sub">incl. production pipeline</div>${dStr}</div>
+    <div class="s-card" style="${crit>0?'border-color:#f5c6c6;background:#fffafa':''}"><div class="s-label">Critical SKUs</div><div class="s-value" style="${crit>0?'color:var(--red)':''}">${crit}</div><div class="s-sub">below 50% of reorder point</div></div>
+    <div class="s-card"><div class="s-label">Low Stock SKUs</div><div class="s-value" style="${low>0?'color:var(--amber)':''}">${low}</div><div class="s-sub">below reorder point</div></div>
+    <div class="s-card"><div class="s-label">Data as of</div><div class="s-value" style="font-size:18px">${state.dataDate??'—'}</div><div class="s-sub">${state.prevDate?`prev: ${state.prevDate}`:'no previous snapshot'}</div></div>`;
+}
+
+// ═══════════════════════════════════════════
+// CAMPAIGN BANNER
+// ═══════════════════════════════════════════
+function renderCampaign(mIdx) {
+  const items = CAMPAIGNS[mIdx]||[];
+  const banner = document.getElementById('campaignBanner');
+  if (!items.length){banner.style.display='none';return;}
+  const tags = items.map(c=>{
+    const cls=c.type==='both'?'campaign-both':c.type==='d2c'?'campaign-d2c':'campaign-b2b';
+    const lbl=c.type==='both'?'⚡ Both':c.type==='d2c'?'D2C':'B2B';
+    return `<span class="campaign-item ${cls}"><strong>${lbl}</strong> ${c.label}</span>`;
+  }).join('');
+  banner.style.display='flex';
+  banner.innerHTML=`<span class="campaign-label">Active this month</span>${tags}`;
+}
+
+// ═══════════════════════════════════════════
+// ROW BUILDER (shared for all lines)
+// ═══════════════════════════════════════════
+function buildRow(sku, mIdx, colCount) {
+  const d   = state.current[sku] || {};
+  const fc  = FORECAST[sku];
+  const st  = getStatus(sku);
+  const name = SKU_NAMES[sku] || fc?.name || sku;
+  const swatch = SWATCHES[sku];
+  const nameCell = `<div class="color-cell">
+    ${swatch ? `<div class="swatch" style="background:${swatch}"></div>` : ''}
+    <div><div class="cell-name">${name}</div><div class="cell-sku">${sku}</div></div>
+  </div>`;
+
+  const expandId = `panel-${sku}`;
+  const row = `<tr class="${st==='crit'?'row-crit':''}" onclick="toggleRow('${expandId}')">
+    <td>${nameCell}</td>
+    <td class="num-cell strong">${fmt(d.phys)}</td>
+    <td class="num-cell strong ${(d.avail??0)<0?'neg':''}">${fmt(d.avail)}</td>
+    <td class="num-cell muted hide-m">${d.production>0?fmt(d.production):'<span style="color:var(--ink4)">—</span>'}</td>
+    <td class="hide-m">${deltaHtml(sku)}</td>
+    <td class="hide-m">${covHtml(sku,mIdx)}</td>
+    <td>
+      ${statusBadge(st)}
+      ${(d.production??0)>0 ? `<div style="margin-top:4px;font-family:'Instrument Mono',monospace;font-size:10px;color:var(--blue);background:var(--blue-bg);padding:2px 6px;border-radius:3px;white-space:nowrap">⚙ ${fmt(d.production)} in prod</div>` : ''}
+    </td>
+  </tr>
+  <tr><td colspan="${colCount}" class="expand-td">
+    <div class="expand-panel" id="${expandId}">
+      <div class="expand-inner">
+        <div class="ex-stat"><div class="ex-label">Total Stock</div><div class="ex-value">${fmt(d.total)}</div><div class="ex-sub">at WSVK</div></div>
+        <div class="ex-stat"><div class="ex-label">Phys. Available</div><div class="ex-value">${fmt(d.phys)}</div><div class="ex-sub">ready to ship now</div></div>
+        <div class="ex-stat"><div class="ex-label">Reserved</div><div class="ex-value">${fmt(d.reserved)}</div><div class="ex-sub">committed to orders</div></div>
+        <div class="ex-stat"><div class="ex-label">In Production</div><div class="ex-value">${fmt(d.production)}</div><div class="ex-sub">incoming</div></div>
+        <div class="ex-stat"><div class="ex-label">Net Available</div><div class="ex-value" style="color:${(d.avail??0)<(d.reorder??0)?'var(--red)':'var(--green)'}">${fmt(d.avail)}</div><div class="ex-sub">reorder @ ${fmt(d.reorder)}</div></div>
+        <div class="ex-stat"><div class="ex-label">vs Prev Snapshot</div>${deltaHtml(sku).replace('delta-cell','ex-value')}<div class="ex-sub">${state.prevDate||'—'}</div></div>
+      </div>
+      ${fc ? sparklineHtml(sku, mIdx) : ''}
+    </div>
+  </td></tr>`;
+  return row;
+}
+
+// ═══════════════════════════════════════════
+// SET ROW BUILDER (BOM-based)
+// ═══════════════════════════════════════════
+function buildSetRow(sku, mIdx, colCount) {
+  const components = BOM[sku];
+  if (!components) {
+    // Non-BOM set: render a 5-column row matching Sets table header
+    const d = state.current[sku] || {};
+    const fc = FORECAST[sku];
+    const st = getStatus(sku);
+    const name = fc?.name || sku;
+    const expandId = `panel-${sku}`;
+    return `<tr class="${st==='crit'?'row-crit':''}" onclick="toggleRow('${expandId}')">
+      <td><div><div class="cell-name">${name}</div><div class="cell-sku">${sku}</div></div></td>
+      <td class="num-cell strong ${(d.avail??0)<0?'neg':''}">${fmt(d.phys)}</td>
+      <td class="hide-m">${deltaHtml(sku)}</td>
+      <td class="hide-m">${covHtml(sku,mIdx)}</td>
+      <td>
+        ${statusBadge(st)}
+        ${(d.production??0)>0 ? `<div style="margin-top:4px;font-family:'Instrument Mono',monospace;font-size:10px;color:var(--blue);background:var(--blue-bg);padding:2px 6px;border-radius:3px;white-space:nowrap">⚙ ${fmt(d.production)} in prod</div>` : ''}
+      </td>
+    </tr>
+    <tr><td colspan="${colCount}" class="expand-td">
+      <div class="expand-panel" id="${expandId}">
+        <div class="expand-inner">
+          <div class="ex-stat"><div class="ex-label">Phys. Available</div><div class="ex-value">${fmt(d.phys)}</div><div class="ex-sub">ready to ship now</div></div>
+          <div class="ex-stat"><div class="ex-label">Reserved</div><div class="ex-value">${fmt(d.reserved)}</div><div class="ex-sub">committed to orders</div></div>
+          <div class="ex-stat"><div class="ex-label">In Production</div><div class="ex-value">${fmt(d.production)}</div><div class="ex-sub">incoming</div></div>
+          <div class="ex-stat"><div class="ex-label">Net Available</div><div class="ex-value" style="color:${(d.avail??0)<(d.reorder??0)?'var(--red)':'var(--green)'}">${fmt(d.avail)}</div><div class="ex-sub">reorder @ ${fmt(d.reorder)}</div></div>
+          <div class="ex-stat"><div class="ex-label">vs Prev Snapshot</div>${deltaHtml(sku).replace('delta-cell','ex-value')}<div class="ex-sub">${state.prevDate||'—'}</div></div>
+        </div>
+        ${fc ? sparklineHtml(sku, mIdx) : ''}
+      </div>
+    </td></tr>`;
+  }
+
+  const cur = state.current;
+  let minAvail = Infinity, bottleneck = null;
+  components.forEach(cSku => {
+    const avail = cur[cSku]?.avail ?? 0;
+    if (avail < minAvail) { minAvail = avail; bottleneck = cSku; }
+  });
+  const assemblable = minAvail===Infinity ? 0 : Math.max(0, minAvail);
+  const fc = FORECAST[sku];
+  const mFc_d2c = fc?.d2c[mIdx]??0, mFc_b2b = fc?.b2b[mIdx]??0, mFc_tot = mFc_d2c+mFc_b2b;
+  const cov = mFc_tot>0 ? assemblable/mFc_tot : null;
+  const covColor = cov==null?'#ccc':cov>=2?'var(--green)':cov>=1?'var(--amber)':'var(--red)';
+  let st = assemblable<=0?'crit':(mFc_tot>0&&assemblable/mFc_tot<1?'low':'ok');
+  const name = fc?.name || sku;
+
+  const covCell = mFc_tot===0 ? '<span style="color:var(--ink4);font-size:11px">No forecast</span>' : `
+    <div class="cov-wrap">
+      <div class="cov-row"><span class="cov-lbl">D2C</span>${covBar(mFc_d2c/Math.max(mFc_tot,1),'var(--blue)')}<span class="cov-num">${fmt(mFc_d2c)}</span></div>
+      <div class="cov-row"><span class="cov-lbl">B2B</span>${covBar(mFc_b2b/Math.max(mFc_tot,1),'var(--green)')}<span class="cov-num">${fmt(mFc_b2b)}</span></div>
+      <div class="cov-row" style="margin-top:2px"><span class="cov-lbl" style="color:var(--ink3);font-weight:600">Cov</span>
+      <span style="font-family:'Instrument Mono',monospace;font-size:11px;color:${covColor};font-weight:600">${cov==null?'—':cov>9?'>9×':cov.toFixed(1)+'×'}</span></div>
+    </div>`;
+
+  const bottleneckHtml = bottleneck ? `<div style="font-size:12px;display:flex;align-items:center;gap:6px">
+    ${SWATCHES[bottleneck]?`<div class="swatch" style="width:12px;height:12px;background:${SWATCHES[bottleneck]}"></div>`:''}
+    ${SKU_NAMES[bottleneck]||bottleneck}
+    <span style="font-family:'Instrument Mono',monospace;color:var(--ink3)">${fmt(cur[bottleneck]?.avail)}</span>
+  </div>` : '—';
+
+  const expandId = `panel-${sku}`;
+  return `<tr class="${st==='crit'?'row-crit':''}" onclick="toggleRow('${expandId}')">
+    <td><div><div class="cell-name">${name}</div><div class="cell-sku">${sku} · ${components.length} components</div></div></td>
+    <td class="num-cell strong ${assemblable===0?'neg':''}">${fmt(assemblable)}</td>
+    <td class="hide-m">${bottleneckHtml}</td>
+    <td class="hide-m">${covCell}</td>
+    <td>
+      ${statusBadge(st)}
+      ${(cur[sku]?.production??0)>0 ? `<div style="margin-top:4px;font-family:'Instrument Mono',monospace;font-size:10px;color:var(--blue);background:var(--blue-bg);padding:2px 6px;border-radius:3px;white-space:nowrap">⚙ ${fmt(cur[sku].production)} in prod</div>` : ''}
+    </td>
+  </tr>
+  <tr><td colspan="${colCount}" class="expand-td">
+    <div class="expand-panel" id="${expandId}">
+      <div class="expand-inner" style="grid-template-columns:repeat(${Math.min(components.length,6)},1fr)">
+        ${components.map(cSku => {
+          const cd = cur[cSku]||{};
+          const isB = cSku===bottleneck;
+          return `<div class="ex-stat">
+            <div class="ex-label" style="display:flex;align-items:center;gap:4px">
+              ${SWATCHES[cSku]?`<div class="swatch" style="width:8px;height:8px;background:${SWATCHES[cSku]}"></div>`:''}
+              ${SKU_NAMES[cSku]||cSku} ${isB?'<span style="color:var(--red);font-size:9px">LIMIT</span>':''}
+            </div>
+            <div class="ex-value" style="color:${isB?'var(--red)':'var(--ink)'}">${fmt(cd.avail)}</div>
+            <div class="ex-sub">phys: ${fmt(cd.phys)}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      ${fc ? sparklineHtml(sku, mIdx) : ''}
+    </div>
+  </td></tr>`;
+}
+
+// ═══════════════════════════════════════════
+// SPARKLINE
+// ═══════════════════════════════════════════
+function sparklineHtml(sku, activeMo) {
+  const fc = FORECAST[sku];
+  if (!fc) return '';
+  const maxVal = Math.max(...fc.d2c.map((v,i)=>v+fc.b2b[i]),1);
+  const maxH = 40;
+  const bars = MONTHS.map((mo,i) => {
+    const d2c=fc.d2c[i], b2b=fc.b2b[i];
+    const hD=Math.round((d2c/maxVal)*maxH), hB=Math.round((b2b/maxVal)*maxH);
+    return `<div class="spark-month">
+      <div class="spark-bar-wrap" style="height:${maxH}px;justify-content:flex-end">
+        <div class="spark-bar b2b" style="height:${hB}px;width:100%"></div>
+        <div class="spark-bar d2c" style="height:${hD}px;width:100%"></div>
+      </div>
+      <div class="spark-val">${(d2c+b2b)>0?fmt(d2c+b2b):''}</div>
+      <div class="spark-mo ${i===activeMo?'active':''}">${mo}</div>
+    </div>`;
+  }).join('');
+  return `<div class="spark-wrap">
+    <div class="spark-title">2026 Forecast — D2C + B2B</div>
+    <div class="spark-months">${bars}</div>
+    <div class="spark-legend">
+      <div class="spark-legend-item"><div class="spark-legend-dot" style="background:var(--blue)"></div>D2C</div>
+      <div class="spark-legend-item"><div class="spark-legend-dot" style="background:var(--green)"></div>B2B</div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+// SECTION BUILDER
+// ═══════════════════════════════════════════
+function renderSection(line, mIdx, search, filter) {
+  const cur = state.current;
+
+  // Get all SKUs for this line from forecast + live data
+  const forecastSkus = Object.keys(FORECAST).filter(s => FORECAST[s].group === line.id);
+  // Also include SKUs from live data that match this group (via forecast lookup)
+  // Use forecastSkus as the source of truth
+  let skus = forecastSkus.filter(sku => cur[sku]);  // only show if we have live stock data
+
+  // Apply search
+  if (search) {
+    skus = skus.filter(sku => {
+      const name = (SKU_NAMES[sku] || FORECAST[sku]?.name || '').toLowerCase();
+      return name.includes(search) || sku.includes(search);
+    });
+  }
+
+  // Exclude dormant SKUs: 0 physical stock AND 0 in production
+  skus = skus.filter(sku => {
+    const d = state.current[sku];
+    return (d.phys ?? 0) > 0 || (d.production ?? 0) > 0 || (d.avail ?? 0) !== 0;
+  });
+
+  // Apply status filter
+  if (filter === 'prod') {
+    skus = skus.filter(sku => (state.current[sku]?.production ?? 0) > 0);
+  } else if (filter !== 'all') {
+    skus = skus.filter(sku => getStatus(sku) === filter);
+  }
+
+  if (skus.length === 0 && search) return '';  // hide empty sections during search
+
+  const total = forecastSkus.filter(s => cur[s]).length;
+  const critCount = skus.filter(s => getStatus(s)==='crit').length;
+  const lowCount  = skus.filter(s => getStatus(s)==='low').length;
+
+  const isCollapsed = state.collapsed[line.id] || false;
+  const isBomSection = line.hasBom;
+
+  // Section header with collapse toggle
+  const sectionHeader = `
+    <div class="section-head" style="cursor:pointer;margin-top:28px" onclick="toggleSection('${line.id}')">
+      <h2>${line.icon} ${line.label}</h2>
+      <div style="display:flex;align-items:center;gap:8px;margin-left:12px">
+        ${critCount>0?`<span class="badge badge-crit">${critCount} critical</span>`:''}
+        ${lowCount>0?`<span class="badge badge-low">${lowCount} low</span>`:''}
+        <span style="font-size:11px;color:var(--ink4)">${total} SKUs</span>
+      </div>
+      <div class="section-head-line"></div>
+      <span style="color:var(--ink4);font-size:16px;margin-left:8px">${isCollapsed?'▸':'▾'}</span>
+    </div>`;
+
+  if (isCollapsed) return sectionHeader + `<div style="margin-bottom:8px"></div>`;
+
+  // Build table
+  let thead, rows;
+  if (isBomSection) {
+    thead = `<thead><tr>
+      <th>Product</th>
+      <th class="num">Assemblable</th>
+      <th class="hide-m">Bottleneck</th>
+      <th class="hide-m">Coverage ${MONTHS[mIdx]}</th>
+      <th>Status</th>
+    </tr></thead>`;
+    rows = skus.map(sku => buildSetRow(sku, mIdx, 5)).join('');
+  } else {
+    thead = `<thead><tr>
+      <th>SKU</th>
+      <th class="num">Phys. Available</th>
+      <th class="num">Net Available</th>
+      <th class="num hide-m">In Production</th>
+      <th class="hide-m">vs Prev</th>
+      <th class="hide-m">Coverage ${MONTHS[mIdx]}</th>
+      <th>Status</th>
+    </tr></thead>`;
+    rows = skus.map(sku => buildRow(sku, mIdx, 7)).join('');
+  }
+
+  const emptyMsg = skus.length===0
+    ? `<div style="padding:32px;text-align:center;color:var(--ink4);font-size:13px">No SKUs match current filter</div>`
+    : '';
+
+  return `${sectionHeader}
+    <div class="table-shell" style="margin-bottom:4px;animation:fadeUp 0.3s ease both">
+      <table>${thead}<tbody>${rows}</tbody></table>
+      ${emptyMsg}
+      <div class="table-foot">Showing <strong>${skus.length}</strong> of <strong>${total}</strong> SKUs</div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════
+// TOGGLE HELPERS
+// ═══════════════════════════════════════════
+function toggleRow(panelId) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  const isOpen = panel.classList.contains('open');
+  document.querySelectorAll('.expand-panel.open').forEach(p => p.classList.remove('open'));
+  if (!isOpen) panel.classList.add('open');
+}
+function toggleSection(lineId) {
+  state.collapsed[lineId] = !state.collapsed[lineId];
+  render();
+}
+function setFilter(f, btn) {
+  state.filter = f;
+  // Only deactivate buttons in same group
+  btn.closest('.tab-group').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+function setCategory(cat, btn) {
+  state.activeCategory = cat;
+  document.getElementById('catFilter').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // Auto-expand relevant sections, collapse others
+  PRODUCT_LINES.forEach(line => {
+    state.collapsed[line.id] = (cat !== 'all' && line.id !== cat);
+  });
+  render();
+}
+
+// ═══════════════════════════════════════════
+// PRODUCTION STRIP
+// ═══════════════════════════════════════════
+function render() {
+  const mIdx  = parseInt(document.getElementById('monthSel').value);
+  const search = document.getElementById('searchBox').value.toLowerCase().trim();
+  renderCampaign(mIdx);
+  renderSummary();
+  document.getElementById('dataDate').textContent = state.dataDate || '—';
+
+  const sectionsHtml = PRODUCT_LINES.map(line =>
+    renderSection(line, mIdx, search, state.filter)
+  ).join('');
+  document.getElementById('allSections').innerHTML = sectionsHtml;
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+(async () => {
+  const now = new Date();
+  document.getElementById('monthSel').value = now.getMonth();
+  // Render immediately with demo data so page is usable right away
+  useDemoData();
+  render();
+  
+  // Then fetch live data in background and refresh
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch('/api/inventory', { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    state.current  = normalizeKeys(data.current);
+    state.prev     = data.prev ? normalizeKeys(data.prev) : null;
+    state.dataDate = data.date;
+    state.prevDate = data.prevDate;
+    document.getElementById('liveLabel').textContent = 'live';
+    document.getElementById('errorBar').style.display = 'none';
+    render();
+  } catch(e) {
+    console.warn('Live fetch failed, keeping demo data', e);
+    document.getElementById('errorBar').style.display = 'block';
+  }
+})();
+</script>
+</body>
+</html>

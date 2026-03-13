@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/inventory",
+      "destination": "https://script.google.com/macros/s/AKfycbyTLFvlPyZA8eDPfcTQJae8MdpzQZQ6qnI52PVlY15StKciPHl35R4n0pYO3gxOUKAvBA/exec"
+    }
+  ]
+}
