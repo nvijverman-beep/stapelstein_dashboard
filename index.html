@@ -1940,15 +1940,25 @@ function render() {
   useDemoData();
   render();
   
-  // Then fetch live data in background and refresh
-  try {
+  // Then fetch live data in background and refresh (with retry)
+  async function fetchLive() {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), 25000);
     const res = await fetch('/api/inventory', { signal: controller.signal });
     clearTimeout(timeout);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
+    return data;
+  }
+  try {
+    let data;
+    try { data = await fetchLive(); }
+    catch(e1) {
+      console.warn('Attempt 1 failed, retrying in 5s...', e1);
+      await new Promise(r => setTimeout(r, 5000));
+      data = await fetchLive();
+    }
     state.current  = normalizeKeys(data.current);
     state.prev     = data.prev ? normalizeKeys(data.prev) : null;
     state.dataDate = data.date;
@@ -1957,7 +1967,7 @@ function render() {
     document.getElementById('errorBar').style.display = 'none';
     render();
   } catch(e) {
-    console.warn('Live fetch failed, keeping demo data', e);
+    console.warn('Live fetch failed after retry, keeping demo data', e);
     document.getElementById('errorBar').style.display = 'block';
   }
 })();
