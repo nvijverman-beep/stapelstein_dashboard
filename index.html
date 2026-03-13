@@ -412,6 +412,7 @@ tbody tr.row-crit:hover { background: #fff3f3; }
         <button class="tab-btn" onclick="setCategory('Grow',this)">Grow</button>
         <button class="tab-btn" onclick="setCategory('Inside',this)">Inside</button>
         <button class="tab-btn" onclick="setCategory('Board',this)">Board</button>
+        <button class="tab-btn" onclick="setCategory('unique',this)">Unique ✦</button>
         <button class="tab-btn" onclick="setCategory('Dynamic',this)">Dynamic</button>
         <button class="tab-btn" onclick="setCategory('Mat',this)">Mat</button>
       </div>
@@ -1733,6 +1734,14 @@ function renderSection(line, mIdx, search, filter) {
   // Use forecastSkus as the source of truth
   let skus = forecastSkus.filter(sku => cur[sku]);  // only show if we have live stock data
 
+  // Apply unique filter
+  if (state.activeCategory === 'unique') {
+    skus = skus.filter(sku => {
+      const name = (SKU_NAMES[sku] || FORECAST[sku]?.name || '').toLowerCase();
+      return name.includes('unique');
+    });
+  }
+
   // Apply search
   if (search) {
     skus = skus.filter(sku => {
@@ -1840,8 +1849,9 @@ function setCategory(cat, btn) {
   document.getElementById('catFilter').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   // Auto-expand relevant sections, collapse others
+  // For 'unique', expand all sections (Uniques span multiple groups)
   PRODUCT_LINES.forEach(line => {
-    state.collapsed[line.id] = (cat !== 'all' && line.id !== cat);
+    state.collapsed[line.id] = (cat !== 'all' && cat !== 'unique' && line.id !== cat);
   });
   render();
 }
